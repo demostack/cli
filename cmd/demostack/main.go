@@ -7,6 +7,7 @@ import (
 
 	"github.com/demostack/cli/pkg"
 	"github.com/demostack/cli/pkg/secureenv"
+	"github.com/demostack/cli/pkg/securessh"
 
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 )
@@ -19,13 +20,18 @@ const (
 var (
 	app = kingpin.New("demostack", "A command-line application to interact with your stacks.")
 
-	cRun     = app.Command("run", "Run a command with environment variables from encrypted storage.")
+	cRun     = app.Command("run", "Run a command with secure environment variables.")
 	cRunArgs = cRun.Arg("arguments", "Command and optional arguments to run.").Required().Strings()
 
 	cEnv      = app.Command("env", "Manage secure environment variables.")
 	cEnvSet   = cEnv.Command("set", "Add or update a secure environment variable.")
 	cEnvUnset = cEnv.Command("unset", "Remove a secure environment variable.")
 	cEnvView  = cEnv.Command("view", "View a secure environment variable.")
+
+	cSSH      = app.Command("ssh", "Manage SSH session.")
+	cSSHSet   = cSSH.Command("set", "Set an SSH session.")
+	cSSHLogin = cSSH.Command("login", "Set up a SSH session helper.")
+	cSSHView  = cSSH.Command("view", "View a SSH entry.")
 )
 
 func init() {
@@ -67,5 +73,11 @@ func main() {
 		secureenv.Unset()
 	case cEnvView.FullCommand():
 		secureenv.View()
+	case cSSHSet.FullCommand():
+		securessh.Set()
+	case cSSHLogin.FullCommand():
+		securessh.Login()
+	case cSSHView.FullCommand():
+		securessh.View()
 	}
 }

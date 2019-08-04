@@ -76,12 +76,11 @@ func Set() {
 
 	if encryptValue == "yes" {
 		env.Encrypted = true
-
 		password := ""
 
-		if len(envFile.Arr) > 0 {
+		if ok, v := envFile.HasEncryptedValues(); ok {
 			// If a password already exists, verify it by performing a decrypt.
-			password, _ = DecryptValue(envFile.Arr[0].Value)
+			password, _ = DecryptValue(v)
 		} else {
 			for true {
 				// If no password is set, create a new one.
