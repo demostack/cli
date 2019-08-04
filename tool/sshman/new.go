@@ -1,9 +1,7 @@
-package securessh
+package sshman
 
 import (
-	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"log"
 
 	"github.com/demostack/cli/pkg/secure"
@@ -12,12 +10,13 @@ import (
 	"github.com/manifoldco/promptui"
 )
 
-// Set a new SSH item.
-func Set() {
-	fmt.Println("Set or update an SSH entry.")
+// New SSH item and generate a private key.
+func (c Config) New() {
+	fmt.Println("Create a new SSH entry and generate a private key.")
 
-	// Load the config file.
-	sshFile, err := LoadFile()
+	// Load the entries.
+	sshFile := new(SSHFile)
+	err := c.store.LoadFile(sshFile, c.Prefix)
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -108,30 +107,15 @@ func Set() {
 		fmt.Println("Passwords match.")
 	}
 
-	// Environment value.
-	prompt = promptui.Prompt{
-		Label:    "Private key path (string)",
-		Default:  "",
-		Validate: validate.RequirePEM,
-	}
-	priKeyFile := validate.Must(prompt.Run())
-
-	// Read the file.
-	b, err := ioutil.ReadFile(validate.ExpandPath(priKeyFile))
-	if err != nil {
-		log.Fatalln(err)
-	}
-
-	// Generate the private key that is used on all other steps.
-	pri, err := secure.ParsePrivatePEM(string(b))
-	if err != nil {
-		log.Fatalln(err)
-	}
+	// Generate a new private key.
+	pri, _ := secure.GenerateRSAKeyPair()
 
 	ent.PrivateKey, err = secure.Encrypt(secure.PrivateKeyToPEM(pri), password)
 	if err != nil {
 		log.Fatalln(err)
 	}
+
+	fmt.Println("SSH key generated.")
 
 	// Loop through to see if there are any matches.
 	found := false
@@ -149,17 +133,10 @@ func Set() {
 		sshFile.Arr = append(sshFile.Arr, ent)
 	}
 
-	b, err = json.Marshal(sshFile)
+	err = c.store.Save(sshFile, c.Prefix)
 	if err != nil {
 		log.Fatalln(err)
 	}
 
-	filename := Filename()
-	err = ioutil.WriteFile(filename, b, 0644)
-	if err != nil {
-		log.Fatalln(err)
-	}
-
-	fmt.Printf("Added: %v@%v\n", ent.User, ent.Hostname)
-	fmt.Printf("Saved to: %v\n", filename)
+	fmt.Printf("Created: %v@%v\n", ent.User, ent.Hostname)
 }

@@ -1,9 +1,7 @@
-package secureenv
+package appenv
 
 import (
-	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"log"
 
 	"github.com/demostack/cli/pkg/validate"
@@ -12,7 +10,7 @@ import (
 )
 
 // Unset a secure environment variable.
-func Unset() {
+func (c Config) Unset() {
 	fmt.Println("Unset (delete) a secure environment variable.")
 
 	// App name.
@@ -24,7 +22,9 @@ func Unset() {
 	app := validate.Must(prompt.Run())
 
 	// Load the vars.
-	envFile, err := LoadFile(app)
+	envFile := new(EnvFile)
+	envFile.App = app
+	err := c.store.LoadFile(envFile, c.Prefix, app)
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -67,17 +67,10 @@ func Unset() {
 	// Set the new array.
 	envFile.Arr = newArr
 
-	b, err := json.Marshal(envFile)
-	if err != nil {
-		log.Fatalln(err)
-	}
-
-	filename := Filename(envFile.App)
-	err = ioutil.WriteFile(filename, b, 0644)
+	err = c.store.Save(envFile, c.Prefix, envFile.App)
 	if err != nil {
 		log.Fatalln(err)
 	}
 
 	fmt.Println("Deleted:", name)
-	fmt.Printf("Saved to: %v\n", filename)
 }

@@ -1,9 +1,7 @@
-package secureenv
+package appenv
 
 import (
-	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"log"
 
 	"github.com/demostack/cli/pkg/secure"
@@ -13,7 +11,7 @@ import (
 )
 
 // Set a new secure environment variable.
-func Set() {
+func (c Config) Set() {
 	fmt.Println("Set or update a secure environment variable.")
 
 	// App name.
@@ -25,7 +23,9 @@ func Set() {
 	app := validate.Must(prompt.Run())
 
 	// Load the vars.
-	envFile, err := LoadFile(app)
+	envFile := new(EnvFile)
+	envFile.App = app
+	err := c.store.LoadFile(envFile, c.Prefix, app)
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -80,7 +80,7 @@ func Set() {
 
 		if ok, v := envFile.HasEncryptedValues(); ok {
 			// If a password already exists, verify it by performing a decrypt.
-			password, _ = DecryptValue(v)
+			password, _ = validate.DecryptValue(v)
 		} else {
 			for true {
 				// If no password is set, create a new one.
@@ -152,17 +152,10 @@ func Set() {
 		envFile.Arr = append(envFile.Arr, env)
 	}
 
-	b, err := json.Marshal(envFile)
-	if err != nil {
-		log.Fatalln(err)
-	}
-
-	filename := Filename(envFile.App)
-	err = ioutil.WriteFile(filename, b, 0644)
+	err = c.store.Save(envFile, c.Prefix, envFile.App)
 	if err != nil {
 		log.Fatalln(err)
 	}
 
 	fmt.Println("Added:", env.Name)
-	fmt.Printf("Saved to: %v\n", filename)
 }

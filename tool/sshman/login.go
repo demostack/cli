@@ -1,4 +1,4 @@
-package securessh
+package sshman
 
 import (
 	"fmt"
@@ -9,30 +9,30 @@ import (
 
 	"github.com/demostack/cli/pkg"
 	"github.com/demostack/cli/pkg/secure"
-	"github.com/demostack/cli/pkg/secureenv"
 	"github.com/demostack/cli/pkg/validate"
 
 	"github.com/manifoldco/promptui"
 )
 
 // Login .
-func Login() {
+func (c Config) Login() {
 	fmt.Println("Login helper for SSH.")
 
 	// Load the entries.
-	f, err := LoadFile()
+	sshFile := new(SSHFile)
+	err := c.store.LoadFile(sshFile, c.Prefix)
 	if err != nil {
 		log.Fatalln(err)
 	}
 
-	if len(f.Arr) == 0 {
+	if len(sshFile.Arr) == 0 {
 		fmt.Println("No SSH entries found.")
 		return
 	}
 
 	arr := make([]string, 0)
-	for i := 0; i < len(f.Arr); i++ {
-		arr = append(arr, f.Arr[i].Name)
+	for i := 0; i < len(sshFile.Arr); i++ {
+		arr = append(arr, sshFile.Arr[i].Name)
 	}
 
 	pSelect := promptui.Select{
@@ -42,7 +42,7 @@ func Login() {
 	name := validate.MustSelect(pSelect.Run())
 
 	var ent SSHEntry
-	for _, v := range f.Arr {
+	for _, v := range sshFile.Arr {
 		if v.Name == name {
 			ent = v
 			break
@@ -50,7 +50,7 @@ func Login() {
 	}
 
 	// Get the password.
-	_, priKey := secureenv.DecryptValue(ent.PrivateKey)
+	_, priKey := validate.DecryptValue(ent.PrivateKey)
 
 	// Generate the private key that is used on all other steps.
 	pri, err := secure.ParsePrivatePEM(priKey)

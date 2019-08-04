@@ -1,4 +1,4 @@
-package secureenv
+package appenv
 
 import (
 	"fmt"
@@ -10,7 +10,7 @@ import (
 )
 
 // View a secure environment variable.
-func View() {
+func (c Config) View() {
 	fmt.Println("View a secure environment variable.")
 
 	// App name.
@@ -22,7 +22,9 @@ func View() {
 	app := validate.Must(prompt.Run())
 
 	// Load the vars.
-	envFile, err := LoadFile(app)
+	envFile := new(EnvFile)
+	envFile.App = app
+	err := c.store.LoadFile(envFile, c.Prefix, app)
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -48,7 +50,7 @@ func View() {
 		var arr []string
 		if ok, v := envFile.HasEncryptedValues(); ok {
 			// If a password already exists, verify it.
-			pass, _ := DecryptValue(v)
+			pass, _ := validate.DecryptValue(v)
 			arr = envFile.Strings(pass)
 		} else {
 			// Pass a blank password since it won't be used.
@@ -69,7 +71,7 @@ func View() {
 				return
 			}
 
-			password, _ := DecryptValue(v.Value)
+			password, _ := validate.DecryptValue(v.Value)
 			fmt.Println("Password correct.")
 			fmt.Println(v.String(password))
 			return

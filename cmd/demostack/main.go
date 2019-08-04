@@ -6,9 +6,11 @@ import (
 	"os"
 
 	"github.com/demostack/cli/pkg"
-	"github.com/demostack/cli/pkg/config"
-	"github.com/demostack/cli/pkg/secureenv"
-	"github.com/demostack/cli/pkg/securessh"
+	"github.com/demostack/cli/pkg/logger"
+	"github.com/demostack/cli/pkg/validate"
+	"github.com/demostack/cli/tool/appenv"
+	"github.com/demostack/cli/tool/config"
+	"github.com/demostack/cli/tool/sshman"
 
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 )
@@ -47,25 +49,37 @@ func init() {
 }
 
 func main() {
+	// Create the logger.
+	l := logger.New(log.New(os.Stderr, "", log.LstdFlags))
+
 	app.Version(Version)
 	app.VersionFlag.Short('v')
 	app.HelpFlag.Short('h')
 	arg := kingpin.MustParse(app.Parse(os.Args[1:]))
 
+	// Load the configuration file.
 	c, err := config.LoadFile()
 	if err != nil {
 		log.Fatalln(err)
 	}
 
+	// Load the storage provider.
+	sp := config.NewFilesystemProvider(l)
+
+	// Load the tools.
+	appenvConfig := appenv.NewConfig(l, sp)
+	sshmanConfig := sshman.NewConfig(l, sp)
+
 	switch arg {
 	case cRun.FullCommand():
 		vars := os.Environ()
-		f, err := secureenv.LoadFile((*cRunArgs)[0])
+		f := new(appenv.EnvFile)
+		err := sp.LoadFile(f, "env", (*cRunArgs)[0])
 		if err == nil {
 			var arr []string
 			if ok, v := f.HasEncryptedValues(); ok {
 				// If a password already exists, verify it.
-				pass, _ := secureenv.DecryptValue(v)
+				pass, _ := validate.DecryptValue(v)
 				arr = f.Strings(pass)
 			} else {
 				// Pass a blank password since it won't be used.
@@ -80,21 +94,21 @@ func main() {
 
 		pkg.Run(*cRunArgs, vars)
 	case cEnvSet.FullCommand():
-		secureenv.Set()
+		appenvConfig.Set()
 	case cEnvUnset.FullCommand():
-		secureenv.Unset()
+		appenvConfig.Unset()
 	case cEnvView.FullCommand():
-		secureenv.View()
+		appenvConfig.View()
 	case cSSHNew.FullCommand():
-		securessh.New()
+		sshmanConfig.New()
 	case cSSHSet.FullCommand():
-		securessh.Set()
+		sshmanConfig.Set()
 	case cSSHLogin.FullCommand():
-		securessh.Login()
+		sshmanConfig.Login()
 	case cSSHView.FullCommand():
-		securessh.View()
+		sshmanConfig.View()
 	case cConfigStorageAWS.FullCommand():
-		pass, _ := secureenv.DecryptValue(c.ID)
+		pass, _ := validate.DecryptValue(c.ID)
 		config.SetStorageAWS(c, pass)
 	case cConfigStorageFilesystem.FullCommand():
 		config.SetStorageFilesystem(c)

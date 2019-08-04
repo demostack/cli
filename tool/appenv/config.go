@@ -1,13 +1,28 @@
-package secureenv
+package appenv
 
 import (
 	"fmt"
 
 	"github.com/demostack/cli/pkg/secure"
-	"github.com/demostack/cli/pkg/validate"
-
-	"github.com/manifoldco/promptui"
+	"github.com/demostack/cli/tool"
 )
+
+// Config .
+type Config struct {
+	log   tool.ILogger
+	store tool.IStorage
+
+	Prefix string
+}
+
+// NewConfig .
+func NewConfig(l tool.ILogger, store tool.IStorage) Config {
+	return Config{
+		log:    l,
+		store:  store,
+		Prefix: "env",
+	}
+}
 
 // EnvFile is an environment config file.
 type EnvFile struct {
@@ -56,30 +71,4 @@ func (ev EnvVar) String(password string) string {
 		return fmt.Sprintf("%v=%v", ev.Name, v)
 	}
 	return fmt.Sprintf("%v=%v", ev.Name, ev.Value)
-}
-
-// DecryptValue will verify the password is correct and return the password
-// and the decrypted data.
-func DecryptValue(encryptedValue string) (string, string) {
-	for true {
-		// If a password already exists, verify it.
-		prompt := promptui.Prompt{
-			Label:    "Password required (secure)",
-			Default:  "",
-			Mask:     '*',
-			Validate: validate.EncryptionKey,
-		}
-		password := validate.Must(prompt.Run())
-
-		dec, err := secure.Decrypt(encryptedValue, password)
-
-		if err != nil {
-			fmt.Println("Password is not correct, please try again.")
-		} else {
-			fmt.Println("Password correct.")
-			return password, dec
-		}
-	}
-
-	return "", ""
 }

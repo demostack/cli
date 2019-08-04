@@ -1,26 +1,12 @@
-package securessh
+package validate
 
 import (
 	"fmt"
 
 	"github.com/demostack/cli/pkg/secure"
-	"github.com/demostack/cli/pkg/validate"
 
 	"github.com/manifoldco/promptui"
 )
-
-// SSHFile is an SSH config file.
-type SSHFile struct {
-	Arr []SSHEntry `json:"entries"`
-}
-
-// SSHEntry represents an SSH entry.
-type SSHEntry struct {
-	Name       string `json:"name"`
-	Hostname   string `json:"hostname"`
-	User       string `json:"user"`
-	PrivateKey string `json:"private_key"`
-}
 
 // DecryptValue will verify the password is correct and return the password
 // and the decrypted data.
@@ -31,9 +17,9 @@ func DecryptValue(encryptedValue string) (string, string) {
 			Label:    "Password required (secure)",
 			Default:  "",
 			Mask:     '*',
-			Validate: validate.EncryptionKey,
+			Validate: EncryptionKey,
 		}
-		password := validate.Must(prompt.Run())
+		password := Must(prompt.Run())
 
 		dec, err := secure.Decrypt(encryptedValue, password)
 
