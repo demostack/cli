@@ -8,6 +8,7 @@ import (
 	"github.com/demostack/cli/pkg"
 	"github.com/demostack/cli/pkg/logger"
 	"github.com/demostack/cli/pkg/validate"
+	"github.com/demostack/cli/tool"
 	"github.com/demostack/cli/tool/appenv"
 	"github.com/demostack/cli/tool/config"
 	"github.com/demostack/cli/tool/config/provider"
@@ -58,14 +59,28 @@ func main() {
 	app.HelpFlag.Short('h')
 	arg := kingpin.MustParse(app.Parse(os.Args[1:]))
 
-	// Load the storage provider.
-	sp := provider.NewFilesystemProvider(l)
+	// Load the filesystem storage provider since it's always used.
+	fs := provider.NewFilesystemProvider(l)
 
 	// Load the configuration file.
-	appConfig := config.NewConfig(l, sp)
+	appConfig := config.NewConfig(l, fs)
 	c, err := appConfig.Load()
 	if err != nil {
 		log.Fatalln(err)
+	}
+
+	// Load the current storage provider for the tools.
+	var sp tool.IStorage
+	switch c.Storage.Current {
+	case "filesystem":
+		sp = fs
+	case "aws":
+		pass, _ := validate.DecryptValue(c.ID)
+		dec, err := c.Storage.AWS.Decrypted(pass)
+		if err != nil {
+			log.Fatalln(err)
+		}
+		sp = provider.NewAWSProvider(l, dec)
 	}
 
 	// Load the tools.

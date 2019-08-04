@@ -1,12 +1,11 @@
 package awslib
 
 import (
-	"fmt"
+	"github.com/demostack/cli/pkg/secure"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/sts"
 )
 
@@ -17,6 +16,38 @@ type Storage struct {
 	SessionToken    string `json:"session"`
 	Region          string `json:"region"`
 	Bucket          string `json:"bucket"`
+}
+
+// Encrypted returns the storage object encrypted.
+func (c Storage) Encrypted(password string) (Storage, error) {
+	var err error
+	c.SecretAccessKey, err = secure.Encrypt(c.SecretAccessKey, password)
+	if err != nil {
+		return c, err
+	}
+
+	c.SessionToken, err = secure.Encrypt(c.SessionToken, password)
+	if err != nil {
+		return c, err
+	}
+
+	return c, nil
+}
+
+// Decrypted returns the storage object decrypted.
+func (c Storage) Decrypted(password string) (Storage, error) {
+	var err error
+	c.SecretAccessKey, err = secure.Decrypt(c.SecretAccessKey, password)
+	if err != nil {
+		return c, err
+	}
+
+	c.SessionToken, err = secure.Decrypt(c.SessionToken, password)
+	if err != nil {
+		return c, err
+	}
+
+	return c, nil
 }
 
 // Session returns an AWS session.
@@ -43,29 +74,4 @@ func AccountNumber(c Storage) (string, error) {
 	}
 
 	return aws.StringValue(out.Account), nil
-}
-
-// CreateBucket .
-func CreateBucket(c Storage) error {
-	sess := Session(c)
-	svc := s3.New(sess)
-
-	_, err := svc.GetBucketVersioning(&s3.GetBucketVersioningInput{
-		Bucket: aws.String(c.Bucket),
-	})
-	if err != nil {
-		fmt.Println(err)
-
-		_, err = svc.CreateBucket(&s3.CreateBucketInput{
-			Bucket: aws.String(c.Bucket),
-		})
-		if err != nil {
-			return err
-		}
-		fmt.Println("Bucket created:", c.Bucket)
-	} else {
-		fmt.Println("Bucket found:", c.Bucket)
-	}
-
-	return nil
 }

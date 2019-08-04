@@ -8,7 +8,6 @@ type ILogger interface {
 
 // IStorage provides storage for sensitive data.
 type IStorage interface {
-	//Filename(params ...string) string
 	LoadFile(v interface{}, params ...string) error
 	Save(v interface{}, params ...string) error
 }

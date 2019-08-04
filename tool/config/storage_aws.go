@@ -5,7 +5,6 @@ import (
 	"log"
 
 	"github.com/demostack/cli/pkg/awslib"
-	"github.com/demostack/cli/pkg/secure"
 	"github.com/demostack/cli/pkg/validate"
 
 	"github.com/manifoldco/promptui"
@@ -74,14 +73,8 @@ func (c Config) SetStorageAWS(f File, password string) {
 		log.Fatalln(err)
 	}
 
-	// Encrypt the secret access key.
-	key.SecretAccessKey, err = secure.Encrypt(key.SecretAccessKey, password)
-	if err != nil {
-		log.Fatalln(err)
-	}
-
-	// Encrypt the session token.
-	key.SessionToken, err = secure.Encrypt(key.SessionToken, password)
+	// Encrypt the sensitive information.
+	key, err = key.Encrypted(password)
 	if err != nil {
 		log.Fatalln(err)
 	}
