@@ -29,6 +29,51 @@
   revision = "c3de453c63f4bdb4dadffab9805ec00426c505f7"
 
 [[projects]]
+  digest = "1:227670cde4188871f0301f18fcf7d078c11ee039d4803f2062f4e4b7d8cc5597"
+  name = "github.com/aws/aws-sdk-go"
+  packages = [
+    "aws",
+    "aws/awserr",
+    "aws/awsutil",
+    "aws/client",
+    "aws/client/metadata",
+    "aws/corehandlers",
+    "aws/credentials",
+    "aws/credentials/ec2rolecreds",
+    "aws/credentials/endpointcreds",
+    "aws/credentials/processcreds",
+    "aws/credentials/stscreds",
+    "aws/csm",
+    "aws/defaults",
+    "aws/ec2metadata",
+    "aws/endpoints",
+    "aws/request",
+    "aws/session",
+    "aws/signer/v4",
+    "internal/ini",
+    "internal/s3err",
+    "internal/sdkio",
+    "internal/sdkrand",
+    "internal/sdkuri",
+    "internal/shareddefaults",
+    "private/protocol",
+    "private/protocol/eventstream",
+    "private/protocol/eventstream/eventstreamapi",
+    "private/protocol/json/jsonutil",
+    "private/protocol/query",
+    "private/protocol/query/queryutil",
+    "private/protocol/rest",
+    "private/protocol/restxml",
+    "private/protocol/xml/xmlutil",
+    "service/s3",
+    "service/sts",
+    "service/sts/stsiface",
+  ]
+  pruneopts = "UT"
+  revision = "f3fe96892dc0e8e8e9862456e1455e62e4cb55d4"
+  version = "v1.21.9"
+
+[[projects]]
   branch = "master"
   digest = "1:454adc7f974228ff789428b6dc098638c57a64aa0718f0bd61e53d3cd39d7a75"
   name = "github.com/chzyer/readline"
@@ -81,6 +126,13 @@
   packages = ["."]
   pruneopts = "UT"
   revision = "ed7b1b5ee0f816bbc0ff35bf7c6fdb4f53b6c59a"
+
+[[projects]]
+  digest = "1:bb81097a5b62634f3e9fec1014657855610c82d19b9a40c17612e32651e35dca"
+  name = "github.com/jmespath/go-jmespath"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "c2b33e84"
 
 [[projects]]
   branch = "master"
@@ -242,6 +294,11 @@
   analyzer-name = "dep"
   analyzer-version = 1
   input-imports = [
+    "github.com/aws/aws-sdk-go/aws",
+    "github.com/aws/aws-sdk-go/aws/credentials",
+    "github.com/aws/aws-sdk-go/aws/session",
+    "github.com/aws/aws-sdk-go/service/s3",
+    "github.com/aws/aws-sdk-go/service/sts",
     "github.com/manifoldco/promptui",
     "github.com/stretchr/testify/assert",
     "golang.org/x/crypto/ssh",

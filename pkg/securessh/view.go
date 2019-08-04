@@ -55,11 +55,22 @@ func View() {
 	}
 
 	// Generate the public key.
+	pubPem, err := secure.PublicKeyToPEM(&pri.PublicKey)
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	// Generate the authorized public key.
 	pub, err := secure.PublicKeyToAuthorizedKey(&pri.PublicKey)
 	if err != nil {
 		log.Fatalln(err)
 	}
 
+	fmt.Println()
+	fmt.Println("Command:")
+	fmt.Printf("ssh %v@%v\n", ent.User, ent.Hostname)
+	fmt.Println()
+	fmt.Println("SSH Config (~/.ssh/config):")
 	fmt.Printf("Host %v\n", ent.Name)
 	fmt.Printf("  Hostname %v\n", ent.Hostname)
 	fmt.Printf("  User %v\n", ent.User)
@@ -67,5 +78,7 @@ func View() {
 	fmt.Println("Private Key:")
 	fmt.Println(secure.PrivateKeyToPEM(pri))
 	fmt.Println("Public Key:")
+	fmt.Println(pubPem)
+	fmt.Println("Authorized Public Key:")
 	fmt.Println(string(pub))
 }

@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/demostack/cli/pkg"
+	"github.com/demostack/cli/pkg/config"
 	"github.com/demostack/cli/pkg/secureenv"
 	"github.com/demostack/cli/pkg/securessh"
 
@@ -29,9 +30,15 @@ var (
 	cEnvView  = cEnv.Command("view", "View a secure environment variable.")
 
 	cSSH      = app.Command("ssh", "Manage SSH session.")
-	cSSHSet   = cSSH.Command("set", "Set an SSH session.")
+	cSSHNew   = cSSH.Command("new", "Set an SSH session and generate a new private key.")
+	cSSHSet   = cSSH.Command("set", "Set an SSH session with an existing private key.")
 	cSSHLogin = cSSH.Command("login", "Set up a SSH session helper.")
 	cSSHView  = cSSH.Command("view", "View a SSH entry.")
+
+	cConfig                  = app.Command("config", "Manage settings for demostack application.")
+	cConfigStorage           = cConfig.Command("storage", "Manage storage for the application.")
+	cConfigStorageFilesystem = cConfigStorage.Command("filesystem", "Set the storage to the local filesystem.")
+	cConfigStorageAWS        = cConfigStorage.Command("aws", "Set the storage to AWS.")
 )
 
 func init() {
@@ -44,6 +51,11 @@ func main() {
 	app.VersionFlag.Short('v')
 	app.HelpFlag.Short('h')
 	arg := kingpin.MustParse(app.Parse(os.Args[1:]))
+
+	c, err := config.LoadFile()
+	if err != nil {
+		log.Fatalln(err)
+	}
 
 	switch arg {
 	case cRun.FullCommand():
@@ -73,11 +85,18 @@ func main() {
 		secureenv.Unset()
 	case cEnvView.FullCommand():
 		secureenv.View()
+	case cSSHNew.FullCommand():
+		securessh.New()
 	case cSSHSet.FullCommand():
 		securessh.Set()
 	case cSSHLogin.FullCommand():
 		securessh.Login()
 	case cSSHView.FullCommand():
 		securessh.View()
+	case cConfigStorageAWS.FullCommand():
+		pass, _ := secureenv.DecryptValue(c.ID)
+		config.SetStorageAWS(c, pass)
+	case cConfigStorageFilesystem.FullCommand():
+		config.SetStorageFilesystem(c)
 	}
 }
