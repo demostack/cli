@@ -12,7 +12,7 @@ import (
 )
 
 // SetStorageAWS will set the AWS storage.
-func SetStorageAWS(c File, password string) {
+func (c Config) SetStorageAWS(f File, password string) {
 	fmt.Println("Set the storage provider to AWS.")
 
 	key := awslib.Storage{}
@@ -86,14 +86,13 @@ func SetStorageAWS(c File, password string) {
 		log.Fatalln(err)
 	}
 
-	c.Storage.Current = "aws"
-	c.Storage.AWS = key
+	f.Storage.Current = "aws"
+	f.Storage.AWS = key
 
-	err = SaveFile(c)
+	err = c.store.Save(f, c.Prefix)
 	if err != nil {
 		log.Fatalln(err)
 	}
 
 	fmt.Println("Set provider to:", "aws")
-	fmt.Printf("Saved to: %v\n", Filename())
 }

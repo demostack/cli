@@ -10,6 +10,7 @@ import (
 	"github.com/demostack/cli/pkg/validate"
 	"github.com/demostack/cli/tool/appenv"
 	"github.com/demostack/cli/tool/config"
+	"github.com/demostack/cli/tool/config/provider"
 	"github.com/demostack/cli/tool/sshman"
 
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
@@ -57,14 +58,15 @@ func main() {
 	app.HelpFlag.Short('h')
 	arg := kingpin.MustParse(app.Parse(os.Args[1:]))
 
+	// Load the storage provider.
+	sp := provider.NewFilesystemProvider(l)
+
 	// Load the configuration file.
-	c, err := config.LoadFile()
+	appConfig := config.NewConfig(l, sp)
+	c, err := appConfig.Load()
 	if err != nil {
 		log.Fatalln(err)
 	}
-
-	// Load the storage provider.
-	sp := config.NewFilesystemProvider(l)
 
 	// Load the tools.
 	appenvConfig := appenv.NewConfig(l, sp)
@@ -109,8 +111,8 @@ func main() {
 		sshmanConfig.View()
 	case cConfigStorageAWS.FullCommand():
 		pass, _ := validate.DecryptValue(c.ID)
-		config.SetStorageAWS(c, pass)
+		appConfig.SetStorageAWS(c, pass)
 	case cConfigStorageFilesystem.FullCommand():
-		config.SetStorageFilesystem(c)
+		appConfig.SetStorageFilesystem(c)
 	}
 }
