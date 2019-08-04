@@ -14,3 +14,6 @@
 # OS files
 .DS_Store
 thumbs.db
+
+# Env files
+.demostack*
