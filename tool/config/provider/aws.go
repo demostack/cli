@@ -9,7 +9,6 @@ import (
 	"strings"
 
 	"github.com/demostack/cli/pkg/awslib"
-
 	"github.com/demostack/cli/tool"
 )
 
@@ -42,6 +41,11 @@ func (p AWSProvider) Filename(params ...string) string {
 	}
 
 	return f
+}
+
+// BucketPath returns the path to the file in the S3 bucket.
+func (p AWSProvider) BucketPath(params ...string) string {
+	return fmt.Sprintf("s3://%v/%v", p.creds.Bucket, p.Filename(params...))
 }
 
 // LoadFile will load the configuration file for the app.
@@ -82,7 +86,7 @@ func (p AWSProvider) Save(v interface{}, params ...string) error {
 	if err != nil {
 
 	} else {
-		fmt.Printf("Saved to: %v\n", filename)
+		fmt.Printf("Saved to: %v\n", p.BucketPath(params...))
 	}
 	return err
 }
