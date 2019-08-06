@@ -27,15 +27,111 @@ func NewConfig(l tool.ILogger, store tool.IStorage) Config {
 
 // EnvFile is an environment config file.
 type EnvFile struct {
-	App string   `json:"app"`
-	Arr []EnvVar `json:"vars"`
+	Apps map[string]EnvApp `json:"apps"`
+}
+
+// SetVar .
+func (f *EnvFile) SetVar(app, profile, name string, value EnvVar) {
+	f.Var(app, profile, name)
+	f.Apps[app].Profiles[profile].Vars[name] = value
+}
+
+// Var .
+func (f *EnvFile) Var(app, profile, name string) (EnvVar, bool) {
+	_, ok := f.Apps[app]
+	if !ok {
+		f.Apps = make(map[string]EnvApp)
+		f.Apps[app] = EnvApp{
+			Profiles: make(map[string]EnvProfile),
+		}
+	}
+
+	_, ok = f.Apps[app].Profiles[profile]
+	if !ok {
+		f.Apps[app].Profiles[profile] = EnvProfile{
+			Vars: make(map[string]EnvVar),
+		}
+	}
+
+	v, ok := f.Apps[app].Profiles[profile].Vars[name]
+	if !ok {
+		return EnvVar{}, false
+	}
+
+	return v, true
+}
+
+// Profile .
+func (f *EnvFile) Profile(app, profile string) EnvProfile {
+	f.Var(app, profile, "")
+	return f.Apps[app].Profiles[profile]
+}
+
+// Vars .
+func (f *EnvFile) Vars(app, profile string) map[string]EnvVar {
+	f.Var(app, profile, "")
+	return f.Apps[app].Profiles[profile].Vars
+}
+
+// Encrypted returns an encrypted object.
+func (f EnvFile) Encrypted(passphrase *validate.Passphrase) EnvFile {
+	for kApp, vApp := range f.Apps {
+		for kProfile, vProfile := range vApp.Profiles {
+			for k, v := range vProfile.Vars {
+				if v.Encrypted {
+					env, err := secure.Encrypt(v.Value, passphrase.Password())
+					if err != nil {
+						fmt.Println("Could not encrypt var:", k)
+						v.Value = ""
+					} else {
+						v.Value = env
+					}
+				}
+				f.Apps[kApp].Profiles[kProfile].Vars[k] = v
+			}
+		}
+	}
+
+	return f
+}
+
+// Decrypted returns a decrypted object.
+func (f EnvFile) Decrypted(passphrase *validate.Passphrase) EnvFile {
+	for kApp, vApp := range f.Apps {
+		for kProfile, vProfile := range vApp.Profiles {
+			for k, v := range vProfile.Vars {
+				if v.Encrypted {
+					env, err := secure.Decrypt(v.Value, passphrase.Password())
+					if err != nil {
+						fmt.Println("Could not decrypt var:", k)
+						v.Value = ""
+					} else {
+						v.Value = env
+					}
+				}
+				f.Apps[kApp].Profiles[kProfile].Vars[k] = v
+			}
+		}
+	}
+
+	return f
+}
+
+// EnvApp represents an application.
+type EnvApp struct {
+	Profiles map[string]EnvProfile `json:"profiles"`
+}
+
+// EnvProfile is a profile for an application.
+type EnvProfile struct {
+	Vars map[string]EnvVar `json:"vars"`
 }
 
 // Strings returns a string array of environment variables.
-func (ef EnvFile) Strings(passphrase *validate.Passphrase) []string {
+func (f EnvProfile) Strings(passphrase *validate.Passphrase) []string {
 	arr := make([]string, 0)
-	for _, v := range ef.Arr {
-		s := v.String(passphrase)
+	for i, v := range f.Vars {
+		s := v.String(i, passphrase)
 		if len(s) > 0 {
 			arr = append(arr, s)
 		}
@@ -45,20 +141,19 @@ func (ef EnvFile) Strings(passphrase *validate.Passphrase) []string {
 
 // EnvVar represents an environment variable.
 type EnvVar struct {
-	Name      string `json:"name"`
 	Value     string `json:"value"`
 	Encrypted bool   `json:"encrypted"`
 }
 
 // String returns the name and value in this format: name=value.
-func (ev EnvVar) String(passphrase *validate.Passphrase) string {
+func (ev EnvVar) String(name string, passphrase *validate.Passphrase) string {
 	if ev.Encrypted {
 		v, err := secure.Decrypt(ev.Value, passphrase.Password())
 		if err != nil {
-			fmt.Println("Could not decrypt var:", ev.Name)
+			fmt.Println("Could not decrypt var:", name)
 			return ""
 		}
-		return fmt.Sprintf("%v=%v", ev.Name, v)
+		return fmt.Sprintf("%v=%v", name, v)
 	}
-	return fmt.Sprintf("%v=%v", ev.Name, ev.Value)
+	return fmt.Sprintf("%v=%v", name, ev.Value)
 }

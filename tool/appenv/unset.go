@@ -13,25 +13,38 @@ import (
 func (c Config) Unset() {
 	fmt.Println("Unset (delete) a secure environment variable.")
 
+	// Load the vars.
+	envFile := new(EnvFile)
+	err := c.store.Load(envFile, c.Prefix)
+	if err != nil {
+		log.Fatalln(err)
+	}
+
 	// App name.
 	prompt := promptui.Prompt{
 		Label:    "App name (string)",
 		Default:  "",
 		Validate: validate.RequireString,
 	}
-	app := validate.Must(prompt.Run())
+	appName := validate.Must(prompt.Run())
 
-	// Load the vars.
-	envFile := new(EnvFile)
-	envFile.App = app
-	err := c.store.Load(envFile, c.Prefix, app)
-	if err != nil {
-		log.Fatalln(err)
+	// Profile name.
+	prompt = promptui.Prompt{
+		Label:    "Profile name (string)",
+		Default:  "",
+		Validate: validate.RequireString,
+	}
+	profileName := validate.Must(prompt.Run())
+
+	vars := envFile.Vars(appName, profileName)
+	if len(vars) == 0 {
+		fmt.Printf("No items found for app (profile): %v (%v)\n", appName, profileName)
+		return
 	}
 
 	arr := make([]string, 0)
-	for i := 0; i < len(envFile.Arr); i++ {
-		arr = append(arr, envFile.Arr[i].Name)
+	for k := range vars {
+		arr = append(arr, k)
 	}
 
 	pSelect := promptui.Select{
@@ -54,20 +67,9 @@ func (c Config) Unset() {
 		return
 	}
 
-	newArr := make([]EnvVar, 0)
+	delete(envFile.Apps[appName].Profiles[profileName].Vars, name)
 
-	// Loop through to see if there are any matches.
-	for _, v := range envFile.Arr {
-		// Only copy the item to the new array if it's not marked for deletion.
-		if v.Name != name {
-			newArr = append(newArr, v)
-		}
-	}
-
-	// Set the new array.
-	envFile.Arr = newArr
-
-	err = c.store.Save(envFile, c.Prefix, envFile.App)
+	err = c.store.Save(envFile, c.Prefix)
 	if err != nil {
 		log.Fatalln(err)
 	}

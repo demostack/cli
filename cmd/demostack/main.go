@@ -41,6 +41,7 @@ var (
 
 	cConfig                  = app.Command("config", "Manage settings for demostack application.")
 	cConfigView              = cConfig.Command("view", "View the settings for the application.")
+	cConfigChangePassword    = cConfig.Command("change-password", "Change the config password.")
 	cConfigStorage           = cConfig.Command("storage", "Manage storage for the application.")
 	cConfigStorageFilesystem = cConfigStorage.Command("filesystem", "Set the storage to the local filesystem.")
 	cConfigStorageAWS        = cConfigStorage.Command("aws", "Set the storage to AWS.")
@@ -94,19 +95,26 @@ func main() {
 
 	switch arg {
 	case cRun.FullCommand():
+		if len(*cRunArgs) < 2 {
+			log.Fatalln("Command requires a profile and then the app command.")
+		}
 		vars := os.Environ()
 		f := new(appenv.EnvFile)
-		err := sp.Load(f, "env", (*cRunArgs)[0])
+		err := sp.Load(f, "env")
 		if err == nil {
-			arr := f.Strings(passphrase)
-			vars = append(vars, arr...)
-
-			fmt.Printf("Loaded %v secure environment variable(s).\n", len(arr))
+			profile, ok := f.Apps[(*cRunArgs)[1]].Profiles[(*cRunArgs)[0]]
+			if ok {
+				arr := profile.Strings(passphrase)
+				vars = append(vars, arr...)
+				fmt.Printf("Loaded %v secure environment variable(s).\n", len(arr))
+			} else {
+				fmt.Printf("Found 0 secure environment variables.\n")
+			}
 		} else {
 			fmt.Printf("Found 0 secure environment variables.\n")
 		}
 
-		pkg.Run(*cRunArgs, vars)
+		pkg.Run((*cRunArgs)[1:], vars)
 	case cEnvSet.FullCommand():
 		appenvConfig.Set(passphrase)
 	case cEnvUnset.FullCommand():
@@ -114,15 +122,17 @@ func main() {
 	case cEnvView.FullCommand():
 		appenvConfig.View(passphrase)
 	case cSSHNew.FullCommand():
-		sshmanConfig.New()
+		sshmanConfig.New(passphrase)
 	case cSSHSet.FullCommand():
-		sshmanConfig.Set()
+		sshmanConfig.Set(passphrase)
 	case cSSHLogin.FullCommand():
 		sshmanConfig.Login(passphrase)
 	case cSSHView.FullCommand():
 		sshmanConfig.View(passphrase)
 	case cConfigView.FullCommand():
 		appConfig.View(c, passphrase)
+	case cConfigChangePassword.FullCommand():
+		appConfig.ChangePassword(c, passphrase)
 	case cConfigStorageAWS.FullCommand():
 		appConfig.SetStorageAWS(c, passphrase.Password())
 	case cConfigStorageFilesystem.FullCommand():

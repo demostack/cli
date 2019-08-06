@@ -12,7 +12,7 @@ import (
 )
 
 // Set a new SSH item.
-func (c Config) Set() {
+func (c Config) Set(passphrase *validate.Passphrase) {
 	fmt.Println("Set or update an SSH entry.")
 
 	// Load the entries.
@@ -73,41 +73,6 @@ func (c Config) Set() {
 		}
 	}
 
-	password := ""
-
-	if len(sshFile.Arr) > 0 {
-		// If a password already exists, verify it by performing a decrypt.
-		password, _ = DecryptValue(sshFile.Arr[0].PrivateKey)
-	} else {
-		for true {
-			// If no password is set, create a new one.
-			prompt := promptui.Prompt{
-				Label:    "New password (secure)",
-				Default:  "",
-				Mask:     '*',
-				Validate: validate.EncryptionKey,
-			}
-			password = validate.Must(prompt.Run())
-
-			// If no password is set, create a new one.
-			prompt = promptui.Prompt{
-				Label:    "Verify new password (password)",
-				Default:  "",
-				Mask:     '*',
-				Validate: validate.EncryptionKey,
-			}
-			verifyPassword := validate.Must(prompt.Run())
-
-			if password == verifyPassword {
-				break
-			}
-
-			fmt.Println("Password don't match, please try again.")
-		}
-
-		fmt.Println("Passwords match.")
-	}
-
 	// Environment value.
 	prompt = promptui.Prompt{
 		Label:    "Private key path (string)",
@@ -128,7 +93,7 @@ func (c Config) Set() {
 		log.Fatalln(err)
 	}
 
-	ent.PrivateKey, err = secure.Encrypt(secure.PrivateKeyToPEM(pri), password)
+	ent.PrivateKey, err = secure.Encrypt(secure.PrivateKeyToPEM(pri), passphrase.Password())
 	if err != nil {
 		log.Fatalln(err)
 	}

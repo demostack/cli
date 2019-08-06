@@ -13,31 +13,39 @@ import (
 func (c Config) View(passphrase *validate.Passphrase) {
 	fmt.Println("View a secure environment variable.")
 
+	// Load the vars.
+	envFile := new(EnvFile)
+	err := c.store.Load(envFile, c.Prefix)
+	if err != nil {
+		log.Fatalln(err)
+	}
+
 	// App name.
 	prompt := promptui.Prompt{
 		Label:    "App name (string)",
 		Default:  "",
 		Validate: validate.RequireString,
 	}
-	app := validate.Must(prompt.Run())
+	appName := validate.Must(prompt.Run())
 
-	// Load the vars.
-	envFile := new(EnvFile)
-	envFile.App = app
-	err := c.store.Load(envFile, c.Prefix, app)
-	if err != nil {
-		log.Fatalln(err)
+	// Profile name.
+	prompt = promptui.Prompt{
+		Label:    "Profile name (string)",
+		Default:  "",
+		Validate: validate.RequireString,
 	}
+	profileName := validate.Must(prompt.Run())
 
-	if len(envFile.Arr) == 0 {
-		fmt.Println("No items found for app:", app)
+	vars := envFile.Vars(appName, profileName)
+	if len(vars) == 0 {
+		fmt.Printf("No items found for app (profile): %v (%v)\n", appName, profileName)
 		return
 	}
 
 	arr := make([]string, 0)
 	arr = append(arr, "(All)")
-	for i := 0; i < len(envFile.Arr); i++ {
-		arr = append(arr, envFile.Arr[i].Name)
+	for k := range vars {
+		arr = append(arr, k)
 	}
 
 	pSelect := promptui.Select{
@@ -47,25 +55,18 @@ func (c Config) View(passphrase *validate.Passphrase) {
 	name := validate.MustSelect(pSelect.Run())
 
 	if name == "(All)" {
-		arr := envFile.Strings(passphrase)
+		arr := envFile.Profile(appName, profileName).Strings(passphrase)
 		for _, v := range arr {
 			fmt.Println(v)
 		}
 		return
 	}
 
-	// Find the item.
-	for _, v := range envFile.Arr {
-		if v.Name == name {
-			if !v.Encrypted {
-				fmt.Println(v.String(passphrase))
-				return
-			}
-
-			fmt.Println(v.String(passphrase))
-			return
-		}
+	v, ok := envFile.Var(appName, profileName, name)
+	if !ok {
+		fmt.Println("Could not find value:", name)
+		return
 	}
 
-	fmt.Println("Could not find value:", name)
+	fmt.Println(v.String(name, passphrase))
 }

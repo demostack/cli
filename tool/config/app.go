@@ -25,6 +25,23 @@ type Storage struct {
 // Filesystem is for the local filesystem.
 type Filesystem struct{}
 
+// Encrypted .
+func (f File) Encrypted(passphrase *validate.Passphrase) File {
+	var err error
+
+	f.ID, err = secure.Encrypt(f.ID, passphrase.Password())
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	f.Storage.AWS, err = f.Storage.AWS.Encrypted(passphrase.Password())
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	return f
+}
+
 // Decrypted .
 func (f File) Decrypted(passphrase *validate.Passphrase) File {
 	var err error

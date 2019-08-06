@@ -11,7 +11,7 @@ import (
 )
 
 // New SSH item and generate a private key.
-func (c Config) New() {
+func (c Config) New(passphrase *validate.Passphrase) {
 	fmt.Println("Create a new SSH entry and generate a private key.")
 
 	// Load the entries.
@@ -72,45 +72,10 @@ func (c Config) New() {
 		}
 	}
 
-	password := ""
-
-	if len(sshFile.Arr) > 0 {
-		// If a password already exists, verify it by performing a decrypt.
-		password, _ = DecryptValue(sshFile.Arr[0].PrivateKey)
-	} else {
-		for true {
-			// If no password is set, create a new one.
-			prompt := promptui.Prompt{
-				Label:    "New password (secure)",
-				Default:  "",
-				Mask:     '*',
-				Validate: validate.EncryptionKey,
-			}
-			password = validate.Must(prompt.Run())
-
-			// If no password is set, create a new one.
-			prompt = promptui.Prompt{
-				Label:    "Verify new password (password)",
-				Default:  "",
-				Mask:     '*',
-				Validate: validate.EncryptionKey,
-			}
-			verifyPassword := validate.Must(prompt.Run())
-
-			if password == verifyPassword {
-				break
-			}
-
-			fmt.Println("Password don't match, please try again.")
-		}
-
-		fmt.Println("Passwords match.")
-	}
-
 	// Generate a new private key.
 	pri, _ := secure.GenerateRSAKeyPair()
 
-	ent.PrivateKey, err = secure.Encrypt(secure.PrivateKeyToPEM(pri), password)
+	ent.PrivateKey, err = secure.Encrypt(secure.PrivateKeyToPEM(pri), passphrase.Password())
 	if err != nil {
 		log.Fatalln(err)
 	}

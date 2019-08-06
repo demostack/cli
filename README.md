@@ -6,7 +6,7 @@ This command-line application helps you manage sensitive environment variables a
 
 Features:
 
-- store environment variables so they are encrypted and then pass them into applications at runtime. For example, instead of storing your AWS credentials in plaintext, you can store them securely in demostack and then execute your AWS commands like this: `demostack run aws s3 ls` or `demostack run aws sts get-caller-identity`.
+- store environment variables so they are encrypted and then pass them into applications at runtime. For example, instead of storing your AWS credentials in plaintext, you can store them securely in demostack and then execute your AWS commands like this: `demostack run default aws s3 ls` or `demostack run aws default sts get-caller-identity`.
 - store your SSH keys with a password and then add them to your ssh-agent via temp files for 15 seconds while you login and then removes from the ssh-agent and the temp files. It also makes it very easy to generate your public key or authorized_key public key from your private key.
 
 Keep in mind that that environment variables are still visible for all running applications on a Mac using `ps eww <PID>` or on Linux using `ps faux | grep 'PROCESSHERE'` and then `cat /proc/PIDHERE/environ`.

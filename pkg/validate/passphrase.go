@@ -2,6 +2,7 @@ package validate
 
 import (
 	"fmt"
+	"log"
 
 	"github.com/demostack/cli/pkg/secure"
 
@@ -20,6 +21,58 @@ func NewPassphrase(encryptedValue string) *Passphrase {
 	return &Passphrase{
 		encryptedValue: encryptedValue,
 	}
+}
+
+// GeneratePassphrase will return a new passphrase and the password.
+func GeneratePassphrase() *Passphrase {
+	password := ""
+
+	for true {
+		// If no password is set, create a new one.
+		prompt := promptui.Prompt{
+			Label:    "New password (secure)",
+			Default:  "",
+			Mask:     '*',
+			Validate: EncryptionKey,
+		}
+		password = Must(prompt.Run())
+
+		// If no password is set, create a new one.
+		prompt = promptui.Prompt{
+			Label:    "Verify new password (password)",
+			Default:  "",
+			Mask:     '*',
+			Validate: EncryptionKey,
+		}
+		verifyPassword := Must(prompt.Run())
+
+		if password == verifyPassword {
+			break
+		}
+
+		fmt.Println("Password don't match, please try again.")
+	}
+
+	id, err := secure.UUID()
+	if err != nil {
+		log.Fatalln("cannot generate UUID: " + err.Error())
+	}
+
+	enc, err := secure.Encrypt(id, password)
+	if err != nil {
+		log.Fatalln("cannot encrypt UUID: " + err.Error())
+	}
+
+	p := NewPassphrase(enc)
+	p.password = password
+	p.saved = true
+
+	return p
+}
+
+// ID returns the encrypted value.
+func (p *Passphrase) ID() string {
+	return p.encryptedValue
 }
 
 // Password returns the password if saved or prompted the user to enter it in.

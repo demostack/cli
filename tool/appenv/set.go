@@ -14,56 +14,58 @@ import (
 func (c Config) Set(passphrase *validate.Passphrase) {
 	fmt.Println("Set or update a secure environment variable.")
 
+	// Load the vars.
+	envFile := new(EnvFile)
+	err := c.store.Load(envFile, c.Prefix)
+	if err != nil {
+		log.Fatalln(err)
+	}
+
 	// App name.
 	prompt := promptui.Prompt{
 		Label:    "App name (string)",
 		Default:  "",
 		Validate: validate.RequireString,
 	}
-	app := validate.Must(prompt.Run())
+	appName := validate.Must(prompt.Run())
 
-	// Load the vars.
-	envFile := new(EnvFile)
-	envFile.App = app
-	err := c.store.Load(envFile, c.Prefix, app)
-	if err != nil {
-		log.Fatalln(err)
+	// Profile name.
+	prompt = promptui.Prompt{
+		Label:    "Profile name (string)",
+		Default:  "",
+		Validate: validate.RequireString,
 	}
+	profileName := validate.Must(prompt.Run())
 
-	env := EnvVar{}
-
+	varName := ""
 	for true {
-		// Environment name.
+		// Variable name.
 		prompt = promptui.Prompt{
 			Label:    "Var name (string)",
 			Default:  "",
 			Validate: validate.RequireString,
 		}
-		env.Name = validate.Must(prompt.Run())
+		varName = validate.Must(prompt.Run())
 
-		found := false
-		for _, v := range envFile.Arr {
-			if v.Name == env.Name {
-				found = true
-
-				pSelect := promptui.Select{
-					Label: "Existing var name found, overwrite it (select)",
-					Items: []string{
-						"yes",
-						"no",
-					},
-				}
-				replace := validate.MustSelect(pSelect.Run())
-				if replace == "yes" {
-					found = false
-				}
+		_, ok := envFile.Var(appName, profileName, varName)
+		if !ok {
+			break
+		} else {
+			pSelect := promptui.Select{
+				Label: "Existing var name found, overwrite it (select)",
+				Items: []string{
+					"yes",
+					"no",
+				},
+			}
+			replace := validate.MustSelect(pSelect.Run())
+			if replace == "yes" {
 				break
 			}
 		}
-		if !found {
-			break
-		}
 	}
+
+	env := EnvVar{}
 
 	pSelect := promptui.Select{
 		Label: "Encrypt var value (select)",
@@ -102,26 +104,13 @@ func (c Config) Set(passphrase *validate.Passphrase) {
 		env.Value = validate.Must(prompt.Run())
 	}
 
-	// Loop through to see if there are any matches.
-	found := false
-	for i := 0; i < len(envFile.Arr); i++ {
-		// If the item is found, replace it.
-		if envFile.Arr[i].Name == env.Name {
-			found = true
-			envFile.Arr[i] = env
-			break
-		}
-	}
+	// Store the value.
+	envFile.SetVar(appName, profileName, varName, env)
 
-	// If the item is not found, add it to the end.
-	if !found {
-		envFile.Arr = append(envFile.Arr, env)
-	}
-
-	err = c.store.Save(envFile, c.Prefix, envFile.App)
+	err = c.store.Save(envFile, c.Prefix)
 	if err != nil {
 		log.Fatalln(err)
 	}
 
-	fmt.Println("Added:", env.Name)
+	fmt.Println("Added:", varName)
 }

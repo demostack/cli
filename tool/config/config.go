@@ -4,10 +4,8 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/demostack/cli/pkg/secure"
 	"github.com/demostack/cli/pkg/validate"
 	"github.com/demostack/cli/tool"
-	"github.com/manifoldco/promptui"
 )
 
 // Config .
@@ -33,43 +31,10 @@ func (c Config) Load() (File, error) {
 	err := c.store.Load(&f, c.Prefix)
 	if err != nil {
 		fmt.Println("Initialization - Please set a password.")
-		password := ""
 
-		for true {
-			// If no password is set, create a new one.
-			prompt := promptui.Prompt{
-				Label:    "New password (secure)",
-				Default:  "",
-				Mask:     '*',
-				Validate: validate.EncryptionKey,
-			}
-			password = validate.Must(prompt.Run())
-
-			// If no password is set, create a new one.
-			prompt = promptui.Prompt{
-				Label:    "Verify new password (password)",
-				Default:  "",
-				Mask:     '*',
-				Validate: validate.EncryptionKey,
-			}
-			verifyPassword := validate.Must(prompt.Run())
-
-			if password == verifyPassword {
-				break
-			}
-
-			fmt.Println("Password don't match, please try again.")
-		}
-
-		id, err := secure.UUID()
-		if err != nil {
-			return f, errors.New("cannot generate UUID: " + err.Error())
-		}
-
-		f.ID, err = secure.Encrypt(id, password)
-		if err != nil {
-			return f, errors.New("cannot encrypt UUID: " + err.Error())
-		}
+		// Generate the passphrase and the ID.
+		passphrase := validate.GeneratePassphrase()
+		f.ID = passphrase.ID()
 
 		err = c.store.Save(f, c.Prefix)
 		if err != nil {
