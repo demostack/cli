@@ -1,5 +1,7 @@
 # demostack - CLI
 
+[![Go Report Card](https://goreportcard.com/badge/github.com/demostack/cli)](https://goreportcard.com/report/github.com/demostack/cli)
+
 This command-line application helps you manage sensitive environment variables and SSH information. Data is stored in JSON configuration files with sensitive information encrypted using a password.
 
 Features:
