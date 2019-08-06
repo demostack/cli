@@ -36,6 +36,7 @@ var (
 	cSSH      = app.Command("ssh", "Manage SSH session.")
 	cSSHNew   = cSSH.Command("new", "Set an SSH session and generate a new private key.")
 	cSSHSet   = cSSH.Command("set", "Set an SSH session with an existing private key.")
+	cSSHUnset = cSSH.Command("unset", "Remove an SSH session and private key.")
 	cSSHLogin = cSSH.Command("login", "Set up a SSH session helper.")
 	cSSHView  = cSSH.Command("view", "View a SSH entry.")
 
@@ -125,6 +126,8 @@ func main() {
 		sshmanConfig.New(passphrase)
 	case cSSHSet.FullCommand():
 		sshmanConfig.Set(passphrase)
+	case cSSHUnset.FullCommand():
+		sshmanConfig.Unset(passphrase)
 	case cSSHLogin.FullCommand():
 		sshmanConfig.Login(passphrase)
 	case cSSHView.FullCommand():
