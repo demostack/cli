@@ -42,15 +42,14 @@ func (ef EnvFile) Strings(password string) []string {
 	return arr
 }
 
-// HasEncryptedValues returns true if there are encrypted values and returns
-// one of the encrypted values.
-func (ef EnvFile) HasEncryptedValues() (bool, string) {
+// HasEncryptedValues returns true if there are encrypted values.
+func (ef EnvFile) HasEncryptedValues() bool {
 	for _, v := range ef.Arr {
 		if v.Encrypted {
-			return true, v.Value
+			return true
 		}
 	}
-	return false, ""
+	return false
 }
 
 // EnvVar represents an environment variable.

@@ -15,7 +15,7 @@ import (
 )
 
 // Login .
-func (c Config) Login() {
+func (c Config) Login(passphrase *validate.Passphrase) {
 	fmt.Println("Login helper for SSH.")
 
 	// Load the entries.
@@ -49,8 +49,11 @@ func (c Config) Login() {
 		}
 	}
 
-	// Get the password.
-	_, priKey := validate.DecryptValue(ent.PrivateKey)
+	// Decrypt the private key.
+	priKey, err := secure.Decrypt(ent.PrivateKey, passphrase.Password())
+	if err != nil {
+		log.Fatalln(err)
+	}
 
 	// Generate the private key that is used on all other steps.
 	pri, err := secure.ParsePrivatePEM(priKey)

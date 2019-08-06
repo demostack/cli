@@ -11,7 +11,7 @@ import (
 )
 
 // Set a new secure environment variable.
-func (c Config) Set() {
+func (c Config) Set(passphrase *validate.Passphrase) {
 	fmt.Println("Set or update a secure environment variable.")
 
 	// App name.
@@ -76,40 +76,6 @@ func (c Config) Set() {
 
 	if encryptValue == "yes" {
 		env.Encrypted = true
-		password := ""
-
-		if ok, v := envFile.HasEncryptedValues(); ok {
-			// If a password already exists, verify it by performing a decrypt.
-			password, _ = validate.DecryptValue(v)
-		} else {
-			for true {
-				// If no password is set, create a new one.
-				prompt = promptui.Prompt{
-					Label:    "New password (secure)",
-					Default:  "",
-					Mask:     '*',
-					Validate: validate.EncryptionKey,
-				}
-				password = validate.Must(prompt.Run())
-
-				// If no password is set, create a new one.
-				prompt = promptui.Prompt{
-					Label:    "Verify new password (password)",
-					Default:  "",
-					Mask:     '*',
-					Validate: validate.EncryptionKey,
-				}
-				verifyPassword := validate.Must(prompt.Run())
-
-				if password == verifyPassword {
-					break
-				}
-
-				fmt.Println("Password don't match, please try again.")
-			}
-
-			fmt.Println("Passwords match.")
-		}
 
 		// Environment value.
 		prompt = promptui.Prompt{
@@ -120,7 +86,7 @@ func (c Config) Set() {
 		}
 		newValue := validate.Must(prompt.Run())
 
-		env.Value, err = secure.Encrypt(newValue, password)
+		env.Value, err = secure.Encrypt(newValue, passphrase.Password())
 		if err != nil {
 			log.Fatalln(err)
 		}

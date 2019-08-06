@@ -69,14 +69,17 @@ func main() {
 		log.Fatalln(err)
 	}
 
+	// Set the password. If nil, then the password has not been set. This allows
+	// the commands to detect if a password has been passed in or not.
+	passphrase := validate.NewPassphrase(c.ID)
+
 	// Load the current storage provider for the tools.
 	var sp tool.IStorage
 	switch c.Storage.Current {
 	case "filesystem":
 		sp = fs
 	case "aws":
-		pass, _ := validate.DecryptValue(c.ID)
-		dec, err := c.Storage.AWS.Decrypted(pass)
+		dec, err := c.Storage.AWS.Decrypted(passphrase.Password())
 		if err != nil {
 			log.Fatalln(err)
 		}
@@ -94,10 +97,8 @@ func main() {
 		err := sp.LoadFile(f, "env", (*cRunArgs)[0])
 		if err == nil {
 			var arr []string
-			if ok, v := f.HasEncryptedValues(); ok {
-				// If a password already exists, verify it.
-				pass, _ := validate.DecryptValue(v)
-				arr = f.Strings(pass)
+			if ok := f.HasEncryptedValues(); ok {
+				arr = f.Strings(passphrase.Password())
 			} else {
 				// Pass a blank password since it won't be used.
 				arr = f.Strings("")
@@ -111,22 +112,21 @@ func main() {
 
 		pkg.Run(*cRunArgs, vars)
 	case cEnvSet.FullCommand():
-		appenvConfig.Set()
+		appenvConfig.Set(passphrase)
 	case cEnvUnset.FullCommand():
 		appenvConfig.Unset()
 	case cEnvView.FullCommand():
-		appenvConfig.View()
+		appenvConfig.View(passphrase)
 	case cSSHNew.FullCommand():
 		sshmanConfig.New()
 	case cSSHSet.FullCommand():
 		sshmanConfig.Set()
 	case cSSHLogin.FullCommand():
-		sshmanConfig.Login()
+		sshmanConfig.Login(passphrase)
 	case cSSHView.FullCommand():
-		sshmanConfig.View()
+		sshmanConfig.View(passphrase)
 	case cConfigStorageAWS.FullCommand():
-		pass, _ := validate.DecryptValue(c.ID)
-		appConfig.SetStorageAWS(c, pass)
+		appConfig.SetStorageAWS(c, passphrase.Password())
 	case cConfigStorageFilesystem.FullCommand():
 		appConfig.SetStorageFilesystem(c)
 	}

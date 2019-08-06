@@ -11,7 +11,7 @@ import (
 )
 
 // View .
-func (c Config) View() {
+func (c Config) View(passphrase *validate.Passphrase) {
 	fmt.Println("View SSH entry.")
 
 	// Load the entries.
@@ -45,8 +45,11 @@ func (c Config) View() {
 		}
 	}
 
-	// Get the password.
-	_, priKey := validate.DecryptValue(ent.PrivateKey)
+	// Decrypt the private key.
+	priKey, err := secure.Decrypt(ent.PrivateKey, passphrase.Password())
+	if err != nil {
+		log.Fatalln(err)
+	}
 
 	// Generate the private key that is used on all other steps.
 	pri, err := secure.ParsePrivatePEM(priKey)

@@ -10,7 +10,7 @@ import (
 )
 
 // View a secure environment variable.
-func (c Config) View() {
+func (c Config) View(passphrase *validate.Passphrase) {
 	fmt.Println("View a secure environment variable.")
 
 	// App name.
@@ -48,10 +48,9 @@ func (c Config) View() {
 
 	if name == "(All)" {
 		var arr []string
-		if ok, v := envFile.HasEncryptedValues(); ok {
-			// If a password already exists, verify it.
-			pass, _ := validate.DecryptValue(v)
-			arr = envFile.Strings(pass)
+		if ok := envFile.HasEncryptedValues(); ok {
+			// Password in the password.
+			arr = envFile.Strings(passphrase.Password())
 		} else {
 			// Pass a blank password since it won't be used.
 			arr = envFile.Strings("")
@@ -71,9 +70,7 @@ func (c Config) View() {
 				return
 			}
 
-			password, _ := validate.DecryptValue(v.Value)
-			fmt.Println("Password correct.")
-			fmt.Println(v.String(password))
+			fmt.Println(v.String(passphrase.Password()))
 			return
 		}
 	}
