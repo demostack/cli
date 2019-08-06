@@ -30,14 +30,8 @@ type EnvFile struct {
 	Apps map[string]EnvApp `json:"apps"`
 }
 
-// SetVar .
-func (f *EnvFile) SetVar(app, profile, name string, value EnvVar) {
-	f.Var(app, profile, name)
-	f.Apps[app].Profiles[profile].Vars[name] = value
-}
-
-// Var .
-func (f *EnvFile) Var(app, profile, name string) (EnvVar, bool) {
+// Profiles .
+func (f *EnvFile) Profiles(app string) map[string]EnvProfile {
 	_, ok := f.Apps[app]
 	if !ok {
 		f.Apps = make(map[string]EnvApp)
@@ -46,12 +40,33 @@ func (f *EnvFile) Var(app, profile, name string) (EnvVar, bool) {
 		}
 	}
 
-	_, ok = f.Apps[app].Profiles[profile]
+	return f.Apps[app].Profiles
+}
+
+// Profile .
+func (f *EnvFile) Profile(app, profile string) EnvProfile {
+	f.Profiles(app)
+
+	_, ok := f.Apps[app].Profiles[profile]
 	if !ok {
 		f.Apps[app].Profiles[profile] = EnvProfile{
 			Vars: make(map[string]EnvVar),
 		}
 	}
+
+	return f.Apps[app].Profiles[profile]
+}
+
+// Vars .
+func (f *EnvFile) Vars(app, profile string) map[string]EnvVar {
+	f.Profile(app, profile)
+
+	return f.Apps[app].Profiles[profile].Vars
+}
+
+// Var .
+func (f *EnvFile) Var(app, profile, name string) (EnvVar, bool) {
+	f.Vars(app, profile)
 
 	v, ok := f.Apps[app].Profiles[profile].Vars[name]
 	if !ok {
@@ -61,16 +76,10 @@ func (f *EnvFile) Var(app, profile, name string) (EnvVar, bool) {
 	return v, true
 }
 
-// Profile .
-func (f *EnvFile) Profile(app, profile string) EnvProfile {
-	f.Var(app, profile, "")
-	return f.Apps[app].Profiles[profile]
-}
-
-// Vars .
-func (f *EnvFile) Vars(app, profile string) map[string]EnvVar {
-	f.Var(app, profile, "")
-	return f.Apps[app].Profiles[profile].Vars
+// SetVar .
+func (f *EnvFile) SetVar(app, profile, name string, value EnvVar) {
+	f.Var(app, profile, name)
+	f.Apps[app].Profiles[profile].Vars[name] = value
 }
 
 // Encrypted returns an encrypted object.
