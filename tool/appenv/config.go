@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/demostack/cli/pkg/secure"
+	"github.com/demostack/cli/pkg/validate"
 	"github.com/demostack/cli/tool"
 )
 
@@ -31,25 +32,15 @@ type EnvFile struct {
 }
 
 // Strings returns a string array of environment variables.
-func (ef EnvFile) Strings(password string) []string {
+func (ef EnvFile) Strings(passphrase *validate.Passphrase) []string {
 	arr := make([]string, 0)
 	for _, v := range ef.Arr {
-		s := v.String(password)
+		s := v.String(passphrase)
 		if len(s) > 0 {
 			arr = append(arr, s)
 		}
 	}
 	return arr
-}
-
-// HasEncryptedValues returns true if there are encrypted values.
-func (ef EnvFile) HasEncryptedValues() bool {
-	for _, v := range ef.Arr {
-		if v.Encrypted {
-			return true
-		}
-	}
-	return false
 }
 
 // EnvVar represents an environment variable.
@@ -60,9 +51,9 @@ type EnvVar struct {
 }
 
 // String returns the name and value in this format: name=value.
-func (ev EnvVar) String(password string) string {
+func (ev EnvVar) String(passphrase *validate.Passphrase) string {
 	if ev.Encrypted {
-		v, err := secure.Decrypt(ev.Value, password)
+		v, err := secure.Decrypt(ev.Value, passphrase.Password())
 		if err != nil {
 			fmt.Println("Could not decrypt var:", ev.Name)
 			return ""

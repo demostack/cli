@@ -47,15 +47,7 @@ func (c Config) View(passphrase *validate.Passphrase) {
 	name := validate.MustSelect(pSelect.Run())
 
 	if name == "(All)" {
-		var arr []string
-		if ok := envFile.HasEncryptedValues(); ok {
-			// Password in the password.
-			arr = envFile.Strings(passphrase.Password())
-		} else {
-			// Pass a blank password since it won't be used.
-			arr = envFile.Strings("")
-		}
-
+		arr := envFile.Strings(passphrase)
 		for _, v := range arr {
 			fmt.Println(v)
 		}
@@ -66,11 +58,11 @@ func (c Config) View(passphrase *validate.Passphrase) {
 	for _, v := range envFile.Arr {
 		if v.Name == name {
 			if !v.Encrypted {
-				fmt.Println(v.String(""))
+				fmt.Println(v.String(passphrase))
 				return
 			}
 
-			fmt.Println(v.String(passphrase.Password()))
+			fmt.Println(v.String(passphrase))
 			return
 		}
 	}

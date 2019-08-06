@@ -96,13 +96,7 @@ func main() {
 		f := new(appenv.EnvFile)
 		err := sp.LoadFile(f, "env", (*cRunArgs)[0])
 		if err == nil {
-			var arr []string
-			if ok := f.HasEncryptedValues(); ok {
-				arr = f.Strings(passphrase.Password())
-			} else {
-				// Pass a blank password since it won't be used.
-				arr = f.Strings("")
-			}
+			arr := f.Strings(passphrase)
 			vars = append(vars, arr...)
 
 			fmt.Printf("Loaded %v secure environment variable(s).\n", len(arr))
