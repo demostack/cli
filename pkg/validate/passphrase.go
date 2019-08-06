@@ -45,6 +45,7 @@ func (p *Passphrase) Password() string {
 		} else {
 			fmt.Println("Password correct.")
 			p.saved = true
+			break
 		}
 	}
 
