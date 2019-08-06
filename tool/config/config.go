@@ -30,7 +30,7 @@ func NewConfig(l tool.ILogger, store tool.IStorage) Config {
 // Load the app configuration file.
 func (c Config) Load() (File, error) {
 	f := File{}
-	err := c.store.LoadFile(&f, c.Prefix)
+	err := c.store.Load(&f, c.Prefix)
 	if err != nil {
 		fmt.Println("Initialization - Please set a password.")
 		password := ""

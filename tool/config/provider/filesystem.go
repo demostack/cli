@@ -48,8 +48,8 @@ func (p FilesystemProvider) Filename(params ...string) string {
 	return filepath.Join(u.HomeDir, f)
 }
 
-// LoadFile will load the configuration file for the app.
-func (p FilesystemProvider) LoadFile(v interface{}, params ...string) error {
+// Load will load the configuration file for the app.
+func (p FilesystemProvider) Load(v interface{}, params ...string) error {
 	rv := reflect.ValueOf(v)
 	if rv.Kind() != reflect.Ptr || rv.IsNil() {
 		return errors.New("value passed in must be a pointer")

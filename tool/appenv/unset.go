@@ -24,7 +24,7 @@ func (c Config) Unset() {
 	// Load the vars.
 	envFile := new(EnvFile)
 	envFile.App = app
-	err := c.store.LoadFile(envFile, c.Prefix, app)
+	err := c.store.Load(envFile, c.Prefix, app)
 	if err != nil {
 		log.Fatalln(err)
 	}

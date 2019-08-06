@@ -40,6 +40,7 @@ var (
 	cSSHView  = cSSH.Command("view", "View a SSH entry.")
 
 	cConfig                  = app.Command("config", "Manage settings for demostack application.")
+	cConfigView              = cConfig.Command("view", "View the settings for the application.")
 	cConfigStorage           = cConfig.Command("storage", "Manage storage for the application.")
 	cConfigStorageFilesystem = cConfigStorage.Command("filesystem", "Set the storage to the local filesystem.")
 	cConfigStorageAWS        = cConfigStorage.Command("aws", "Set the storage to AWS.")
@@ -54,6 +55,7 @@ func main() {
 	// Create the logger.
 	l := logger.New(log.New(os.Stderr, "", log.LstdFlags))
 
+	// Set up the application.
 	app.Version(Version)
 	app.VersionFlag.Short('v')
 	app.HelpFlag.Short('h')
@@ -69,8 +71,8 @@ func main() {
 		log.Fatalln(err)
 	}
 
-	// Set the password. If nil, then the password has not been set. This allows
-	// the commands to detect if a password has been passed in or not.
+	// Create the passphrase object. It will only prompt the user for the
+	// password when it's required.
 	passphrase := validate.NewPassphrase(c.ID)
 
 	// Load the current storage provider for the tools.
@@ -94,7 +96,7 @@ func main() {
 	case cRun.FullCommand():
 		vars := os.Environ()
 		f := new(appenv.EnvFile)
-		err := sp.LoadFile(f, "env", (*cRunArgs)[0])
+		err := sp.Load(f, "env", (*cRunArgs)[0])
 		if err == nil {
 			arr := f.Strings(passphrase)
 			vars = append(vars, arr...)
@@ -119,6 +121,8 @@ func main() {
 		sshmanConfig.Login(passphrase)
 	case cSSHView.FullCommand():
 		sshmanConfig.View(passphrase)
+	case cConfigView.FullCommand():
+		appConfig.View(c, passphrase)
 	case cConfigStorageAWS.FullCommand():
 		appConfig.SetStorageAWS(c, passphrase.Password())
 	case cConfigStorageFilesystem.FullCommand():

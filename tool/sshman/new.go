@@ -16,7 +16,7 @@ func (c Config) New() {
 
 	// Load the entries.
 	sshFile := new(SSHFile)
-	err := c.store.LoadFile(sshFile, c.Prefix)
+	err := c.store.Load(sshFile, c.Prefix)
 	if err != nil {
 		log.Fatalln(err)
 	}

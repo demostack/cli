@@ -29,9 +29,9 @@ func NewAWSProvider(l tool.ILogger, creds awslib.Storage) AWSProvider {
 	}
 }
 
-// Filename returns the app configuration file. The strings are typically:
+// Key returns the app configuration file path. The strings are typically:
 // prefix then app.
-func (p AWSProvider) Filename(params ...string) string {
+func (p AWSProvider) Key(params ...string) string {
 	f := ""
 
 	if len(params) == 0 {
@@ -43,19 +43,19 @@ func (p AWSProvider) Filename(params ...string) string {
 	return f
 }
 
-// BucketPath returns the path to the file in the S3 bucket.
-func (p AWSProvider) BucketPath(params ...string) string {
-	return fmt.Sprintf("s3://%v/%v", p.creds.Bucket, p.Filename(params...))
+// Filename returns the path to the file in the S3 bucket.
+func (p AWSProvider) Filename(params ...string) string {
+	return fmt.Sprintf("s3://%v/%v", p.creds.Bucket, p.Key(params...))
 }
 
-// LoadFile will load the configuration file for the app.
-func (p AWSProvider) LoadFile(v interface{}, params ...string) error {
+// Load will load the configuration file for the app.
+func (p AWSProvider) Load(v interface{}, params ...string) error {
 	rv := reflect.ValueOf(v)
 	if rv.Kind() != reflect.Ptr || rv.IsNil() {
 		return errors.New("value passed in must be a pointer")
 	}
 
-	filename := p.Filename(params...)
+	filename := p.Key(params...)
 
 	b, err := awslib.Download(p.creds, p.creds.Bucket, filename)
 	if err != nil {
@@ -80,13 +80,13 @@ func (p AWSProvider) Save(v interface{}, params ...string) error {
 		return err
 	}
 
-	filename := p.Filename(params...)
+	filename := p.Key(params...)
 
 	err = awslib.Upload(p.creds, p.creds.Bucket, filename, bytes.NewBuffer(b))
 	if err != nil {
 
 	} else {
-		fmt.Printf("Saved to: %v\n", p.BucketPath(params...))
+		fmt.Printf("Saved to: %v\n", p.Filename(params...))
 	}
 	return err
 }
