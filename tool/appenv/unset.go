@@ -20,21 +20,27 @@ func (c Config) Unset() {
 		log.Fatalln(err)
 	}
 
-	// App name.
-	prompt := promptui.Prompt{
-		Label:    "App name (string)",
-		Default:  "",
-		Validate: validate.RequireString,
+	arr := make([]string, 0)
+	for k := range envFile.Apps {
+		arr = append(arr, k)
 	}
-	appName := validate.Must(prompt.Run())
 
-	// Profile name.
-	prompt = promptui.Prompt{
-		Label:    "Profile name (string)",
-		Default:  "",
-		Validate: validate.RequireString,
+	pSelect := promptui.Select{
+		Label: "Choose the app to view (select)",
+		Items: arr,
 	}
-	profileName := validate.Must(prompt.Run())
+	appName := validate.MustSelect(pSelect.Run())
+
+	arr = make([]string, 0)
+	for k := range envFile.Profiles(appName) {
+		arr = append(arr, k)
+	}
+
+	pSelect = promptui.Select{
+		Label: "Choose the profile to view (select)",
+		Items: arr,
+	}
+	profileName := validate.MustSelect(pSelect.Run())
 
 	vars := envFile.Vars(appName, profileName)
 	if len(vars) == 0 {
@@ -42,12 +48,12 @@ func (c Config) Unset() {
 		return
 	}
 
-	arr := make([]string, 0)
+	arr = make([]string, 0)
 	for k := range vars {
 		arr = append(arr, k)
 	}
 
-	pSelect := promptui.Select{
+	pSelect = promptui.Select{
 		Label: "Choose the env var to delete (select)",
 		Items: arr,
 	}
