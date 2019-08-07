@@ -25,7 +25,7 @@ const (
 )
 
 var (
-	app = kingpin.New("demostack", "A command-line application to interact with your stacks.")
+	app = kingpin.New("demostack", "A command-line application utility for managing encrypted environment variables and SSH connection information. Also contains SMTP functionality.")
 
 	cRun     = app.Command("run", "Run a command with secure environment variables.")
 	cRunArgs = cRun.Arg("arguments", "Command and optional arguments to run.").Required().Strings()
