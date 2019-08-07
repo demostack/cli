@@ -29,7 +29,7 @@
   revision = "c3de453c63f4bdb4dadffab9805ec00426c505f7"
 
 [[projects]]
-  digest = "1:c608391c6250f0d8517e3e799cdfd37e5a55316fc0bcd4c9ed5797b2fead44a7"
+  digest = "1:e8d089d1e7a5dacf71f0d3636dcba1550de1932026c4f0b822f4bbece4ca01d9"
   name = "github.com/aws/aws-sdk-go"
   packages = [
     "aws",
@@ -68,6 +68,7 @@
     "service/s3",
     "service/s3/s3iface",
     "service/s3/s3manager",
+    "service/sns",
     "service/sts",
     "service/sts/stsiface",
   ]
@@ -317,6 +318,7 @@
     "github.com/aws/aws-sdk-go/aws/session",
     "github.com/aws/aws-sdk-go/service/s3",
     "github.com/aws/aws-sdk-go/service/s3/s3manager",
+    "github.com/aws/aws-sdk-go/service/sns",
     "github.com/aws/aws-sdk-go/service/sts",
     "github.com/manifoldco/promptui",
     "github.com/stretchr/testify/assert",

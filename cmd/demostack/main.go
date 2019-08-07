@@ -49,8 +49,9 @@ var (
 	cConfigView           = cConfig.Command("view", "View the settings for the application.")
 	cConfigChangePassword = cConfig.Command("change-password", "Change the config password.")
 
-	cConfigSMTP  = cConfig.Command("smtp", "Set settings for the SMTP server for the application.")
-	cConfigEmail = app.Command("email", "Send an email via SMTP.")
+	cConfigSMTP = cConfig.Command("smtp", "Set settings for the SMTP server for the application.")
+	cEmail      = app.Command("email", "Send an email via SMTP.")
+	cSMS        = app.Command("sms", "Send an SMS text message via AWS SNS.")
 
 	cConfigStorage           = cConfig.Command("storage", "Manage storage for the application.")
 	cConfigStorageFilesystem = cConfigStorage.Command("filesystem", "Set the storage to the local filesystem.")
@@ -207,8 +208,11 @@ func main() {
 	case cConfigSMTP.FullCommand():
 		appConfig.SetSMTP(c, passphrase)
 
-	case cConfigEmail.FullCommand():
+	case cEmail.FullCommand():
 		appConfig.SendSMTP(c, passphrase)
+
+	case cSMS.FullCommand():
+		appConfig.SendSMS(c, passphrase)
 
 	case cConfigStorageAWS.FullCommand():
 		appConfig.SetStorageAWS(c, passphrase.Password())
