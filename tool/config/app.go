@@ -5,13 +5,15 @@ import (
 
 	"github.com/demostack/cli/pkg/awslib"
 	"github.com/demostack/cli/pkg/secure"
+	"github.com/demostack/cli/pkg/sendmail"
 	"github.com/demostack/cli/pkg/validate"
 )
 
 // File is the demostack config file.
 type File struct {
-	ID      string  `json:"id"`
-	Storage Storage `json:"storage"`
+	ID      string        `json:"id"`
+	Storage Storage       `json:"storage"`
+	SMTP    sendmail.SMTP `json:"smtp"`
 }
 
 // Storage is the storage of the config files.
@@ -39,6 +41,11 @@ func (f File) Encrypted(passphrase *validate.Passphrase) File {
 		log.Fatalln(err)
 	}
 
+	f.SMTP, err = f.SMTP.Encrypted(passphrase)
+	if err != nil {
+		log.Fatalln(err)
+	}
+
 	return f
 }
 
@@ -52,6 +59,11 @@ func (f File) Decrypted(passphrase *validate.Passphrase) File {
 	}
 
 	f.Storage.AWS, err = f.Storage.AWS.Decrypted(passphrase.Password())
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	f.SMTP, err = f.SMTP.Decrypted(passphrase)
 	if err != nil {
 		log.Fatalln(err)
 	}

@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/user"
 	"path/filepath"
+	"strconv"
 	"strings"
 
 	"github.com/demostack/cli/pkg/secure"
@@ -36,6 +37,15 @@ func MustSelect(i int, result string, err error) string {
 func RequireString(input string) error {
 	if len(strings.TrimSpace(input)) < 1 {
 		return errors.New("Value required")
+	}
+	return nil
+}
+
+// RequireInt ensures the input is a number..
+func RequireInt(input string) error {
+	_, err := strconv.Atoi(input)
+	if err != nil {
+		return errors.New("Int required")
 	}
 	return nil
 }

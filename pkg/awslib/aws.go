@@ -36,6 +36,10 @@ func (c Storage) Encrypted(password string) (Storage, error) {
 
 // Decrypted returns the storage object decrypted.
 func (c Storage) Decrypted(password string) (Storage, error) {
+	if c.SecretAccessKey == "" {
+		return c, nil
+	}
+
 	var err error
 	c.SecretAccessKey, err = secure.Decrypt(c.SecretAccessKey, password)
 	if err != nil {
