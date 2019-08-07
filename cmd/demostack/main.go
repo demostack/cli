@@ -30,6 +30,8 @@ var (
 	cRun     = app.Command("run", "Run a command with secure environment variables.")
 	cRunArgs = cRun.Arg("arguments", "Command and optional arguments to run.").Required().Strings()
 
+	cLogin = app.Command("login", "Login to the authentication service.")
+
 	cEncrypt = app.Command("encrypt", "Encrypt a variable with a password.")
 	cDecrypt = app.Command("decrypt", "Decrypt a variable with a password.")
 
@@ -105,6 +107,9 @@ func main() {
 	sshmanConfig := sshman.NewConfig(l, sp)
 
 	switch arg {
+	case cLogin.FullCommand():
+		appConfig.Login(c, passphrase)
+
 	case cRun.FullCommand():
 		if len(*cRunArgs) < 2 {
 			log.Fatalln("Command requires a profile and then the app command.")
