@@ -19,7 +19,7 @@ func (c Config) SendSMS(f File, passphrase *validate.Passphrase) {
 	}
 
 	prompt := promptui.Prompt{
-		Label:     "To Address (string)",
+		Label:     "Phone Number (string, format: +12225559999)",
 		Default:   "+1",
 		AllowEdit: true,
 		Validate:  validate.RequireString,
