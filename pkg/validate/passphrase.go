@@ -23,7 +23,7 @@ func NewPassphrase(encryptedValue string) *Passphrase {
 	}
 }
 
-// GeneratePassphrase will return a new passphrase and the password.
+// GeneratePassphrase will return a new passphrase.
 func GeneratePassphrase() *Passphrase {
 	password := ""
 

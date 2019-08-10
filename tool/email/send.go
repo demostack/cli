@@ -1,4 +1,4 @@
-package config
+package email
 
 import (
 	"fmt"
@@ -10,8 +10,15 @@ import (
 )
 
 // SendSMTP will send an email via SMTP.
-func (c Config) SendSMTP(f File, passphrase *validate.Passphrase) {
+func (c Config) SendSMTP(passphrase *validate.Passphrase) {
 	fmt.Println("Send an email via SMTP.")
+
+	// Load the vars.
+	f := new(File)
+	err := c.store.Load(f, c.Prefix)
+	if err != nil {
+		log.Fatalln(err)
+	}
 
 	if f.SMTP.Host == "" {
 		log.Fatalln("No SMTP connection info found. Please set with: demostack config smtp")

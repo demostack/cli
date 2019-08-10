@@ -9,23 +9,27 @@ import (
 	"strings"
 
 	"github.com/demostack/cli/pkg/awslib"
+	"github.com/demostack/cli/pkg/validate"
 	"github.com/demostack/cli/tool"
 )
 
 // AWSProvider .
 type AWSProvider struct {
-	log   tool.ILogger
-	creds awslib.Storage
+	log        tool.ILogger
+	creds      awslib.Storage
+	passphrase *validate.Passphrase
 
 	Base string
 }
 
 // NewAWSProvider .
-func NewAWSProvider(l tool.ILogger, creds awslib.Storage) AWSProvider {
+func NewAWSProvider(l tool.ILogger, creds awslib.Storage, passphrase *validate.Passphrase) AWSProvider {
 	return AWSProvider{
-		log:   l,
-		Base:  "demostack",
-		creds: creds,
+		log:        l,
+		creds:      creds,
+		passphrase: passphrase,
+
+		Base: "demostack",
 	}
 }
 
@@ -57,15 +61,20 @@ func (p AWSProvider) Load(v interface{}, params ...string) error {
 
 	filename := p.Key(params...)
 
-	b, err := awslib.Download(p.creds, p.creds.Bucket, filename)
+	dec, err := p.creds.Decrypted(p.passphrase.Password())
 	if err != nil {
+		return err
+	}
 
-		//return err
-	} else {
-		err = json.Unmarshal(b, v)
-		if err != nil {
-			return errors.New("unmarshal error: " + err.Error())
-		}
+	b, err := awslib.Download(dec, dec.Bucket, filename)
+	if err != nil {
+		return ErrFileNotFound
+	}
+
+	err = json.Unmarshal(b, v)
+	if err != nil {
+		fmt.Println("unmarshal error: ", err)
+		return ErrFileUnmarshalError
 	}
 
 	//fmt.Printf("Found %v secure environment variable(s).\n", len(f.Arr))
@@ -82,11 +91,34 @@ func (p AWSProvider) Save(v interface{}, params ...string) error {
 
 	filename := p.Key(params...)
 
-	err = awslib.Upload(p.creds, p.creds.Bucket, filename, bytes.NewBuffer(b))
+	dec, err := p.creds.Decrypted(p.passphrase.Password())
+	if err != nil {
+		return err
+	}
+
+	err = awslib.Upload(dec, dec.Bucket, filename, bytes.NewBuffer(b))
 	if err != nil {
 
 	} else {
 		fmt.Printf("Saved to: %v\n", p.Filename(params...))
+	}
+	return err
+}
+
+// Delete .
+func (p AWSProvider) Delete(params ...string) error {
+	filename := p.Key(params...)
+
+	dec, err := p.creds.Decrypted(p.passphrase.Password())
+	if err != nil {
+		return err
+	}
+
+	err = awslib.DeleteObject(dec, dec.Bucket, filename)
+	if err != nil {
+
+	} else {
+		fmt.Printf("Deleted: %v\n", p.Filename(params...))
 	}
 	return err
 }

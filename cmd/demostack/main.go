@@ -13,6 +13,7 @@ import (
 	"github.com/demostack/cli/tool/appenv"
 	"github.com/demostack/cli/tool/config"
 	"github.com/demostack/cli/tool/config/provider"
+	"github.com/demostack/cli/tool/email"
 	"github.com/demostack/cli/tool/sshman"
 
 	"github.com/manifoldco/promptui"
@@ -30,7 +31,9 @@ var (
 	cRun     = app.Command("run", "Run a command with secure environment variables.")
 	cRunArgs = cRun.Arg("arguments", "Command and optional arguments to run.").Required().Strings()
 
-	cLogin = app.Command("login", "Login to the authentication service.")
+	cLogin     = app.Command("login", "Login to the authentication service.")
+	cLoginTest = app.Command("login-test", "Test the AWS credentials from authentication service.")
+	cLogout    = app.Command("logout", "Logout and delete local files.")
 
 	cEncrypt = app.Command("encrypt", "Encrypt a variable with a password.")
 	cDecrypt = app.Command("decrypt", "Decrypt a variable with a password.")
@@ -51,9 +54,11 @@ var (
 	cConfigView           = cConfig.Command("view", "View the settings for the application.")
 	cConfigChangePassword = cConfig.Command("change-password", "Change the config password.")
 
-	cConfigSMTP = cConfig.Command("smtp", "Set settings for the SMTP server for the application.")
-	cEmail      = app.Command("email", "Send an email via SMTP.")
-	cSMS        = app.Command("sms", "Send an SMS text message via AWS SNS.")
+	cEmail     = app.Command("email", "Manage email settings an email via SMTP.")
+	cEmailSet  = cEmail.Command("set", "Set settings for the SMTP server for the application.")
+	cEmailSend = cEmail.Command("send", "Set settings for the SMTP server for the application.")
+
+	cSMS = app.Command("sms", "Send an SMS text message via AWS SNS.")
 
 	cConfigStorage           = cConfig.Command("storage", "Manage storage for the application.")
 	cConfigStorageFilesystem = cConfigStorage.Command("filesystem", "Set the storage to the local filesystem.")
@@ -80,14 +85,17 @@ func main() {
 
 	// Load the configuration file.
 	appConfig := config.NewConfig(l, fs)
-	c, err := appConfig.Load()
+	c, passphrase, err := appConfig.Load()
 	if err != nil {
 		log.Fatalln(err)
 	}
 
-	// Create the passphrase object. It will only prompt the user for the
-	// password when it's required.
-	passphrase := validate.NewPassphrase(c.ID)
+	// Set the passphrase if not already set.
+	if passphrase == nil {
+		// Create the passphrase object. It will only prompt the user for the
+		// password when it's required.
+		passphrase = validate.NewPassphrase(c.ID)
+	}
 
 	// Load the current storage provider for the tools.
 	var sp tool.IStorage
@@ -95,20 +103,21 @@ func main() {
 	case "filesystem":
 		sp = fs
 	case "aws":
-		dec, err := c.Storage.AWS.Decrypted(passphrase.Password())
-		if err != nil {
-			log.Fatalln(err)
-		}
-		sp = provider.NewAWSProvider(l, dec)
+		sp = provider.NewAWSProvider(l, c.Storage.AWS, passphrase)
 	}
 
 	// Load the tools.
 	appenvConfig := appenv.NewConfig(l, sp)
 	sshmanConfig := sshman.NewConfig(l, sp)
+	emailConfig := email.NewConfig(l, sp)
 
 	switch arg {
 	case cLogin.FullCommand():
 		appConfig.Login(c, passphrase)
+	case cLoginTest.FullCommand():
+		appConfig.LoginTest(c, passphrase)
+	case cLogout.FullCommand():
+		appConfig.Logout(c, passphrase)
 
 	case cRun.FullCommand():
 		if len(*cRunArgs) < 2 {
@@ -210,11 +219,11 @@ func main() {
 	case cConfigChangePassword.FullCommand():
 		appConfig.ChangePassword(c, passphrase)
 
-	case cConfigSMTP.FullCommand():
-		appConfig.SetSMTP(c, passphrase)
+	case cEmailSet.FullCommand():
+		emailConfig.SetSMTP(passphrase)
 
-	case cEmail.FullCommand():
-		appConfig.SendSMTP(c, passphrase)
+	case cEmailSend.FullCommand():
+		emailConfig.SendSMTP(passphrase)
 
 	case cSMS.FullCommand():
 		appConfig.SendSMS(c, passphrase)

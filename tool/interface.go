@@ -10,5 +10,6 @@ type ILogger interface {
 type IStorage interface {
 	Load(v interface{}, params ...string) error
 	Save(v interface{}, params ...string) error
+	Delete(params ...string) error
 	Filename(params ...string) string
 }

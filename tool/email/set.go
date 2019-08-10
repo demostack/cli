@@ -1,4 +1,4 @@
-package config
+package email
 
 import (
 	"fmt"
@@ -12,18 +12,25 @@ import (
 )
 
 // SetSMTP will set the SMTP info.
-func (c Config) SetSMTP(f File, passphrase *validate.Passphrase) {
+func (c Config) SetSMTP(passphrase *validate.Passphrase) {
 	fmt.Println("Set the SMTP connection information.")
 
-	var err error
-	key := sendmail.SMTP{}
+	// Load the vars.
+	f := new(File)
+	err := c.store.Load(f, c.Prefix)
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	// Decrypted struct.
+	dec := sendmail.SMTP{}
 
 	prompt := promptui.Prompt{
 		Label:    "Host (string)",
 		Default:  "",
 		Validate: validate.RequireString,
 	}
-	key.Host = validate.Must(prompt.Run())
+	dec.Host = validate.Must(prompt.Run())
 
 	prompt = promptui.Prompt{
 		Label:    "Port (int)",
@@ -31,7 +38,7 @@ func (c Config) SetSMTP(f File, passphrase *validate.Passphrase) {
 		Validate: validate.RequireInt,
 	}
 	rawPort := validate.Must(prompt.Run())
-	key.Port, err = strconv.Atoi(rawPort)
+	dec.Port, err = strconv.Atoi(rawPort)
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -44,7 +51,7 @@ func (c Config) SetSMTP(f File, passphrase *validate.Passphrase) {
 		},
 	}
 	confirm := validate.MustSelect(pSelect.Run())
-	key.SkipVerify, err = strconv.ParseBool(confirm)
+	dec.SkipVerify, err = strconv.ParseBool(confirm)
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -54,21 +61,21 @@ func (c Config) SetSMTP(f File, passphrase *validate.Passphrase) {
 		Default:  "",
 		Validate: validate.RequireString,
 	}
-	key.From = validate.Must(prompt.Run())
+	dec.From = validate.Must(prompt.Run())
 
 	prompt = promptui.Prompt{
 		Label:    "Username (string)",
 		Default:  "",
 		Validate: validate.RequireString,
 	}
-	key.Username = validate.Must(prompt.Run())
+	dec.Username = validate.Must(prompt.Run())
 
 	prompt = promptui.Prompt{
 		Label:   "Password (secret, optional)",
 		Default: "",
 		Mask:    '*',
 	}
-	key.Password = validate.Must(prompt.Run())
+	dec.Password = validate.Must(prompt.Run())
 
 	pSelect = promptui.Select{
 		Label: "Send test email (select)",
@@ -87,14 +94,14 @@ func (c Config) SetSMTP(f File, passphrase *validate.Passphrase) {
 		}
 		to := validate.Must(prompt.Run())
 
-		err := key.SendMail([]string{to}, "demostack Confirmation Email.",
-			"The SMTP settings are configured properly.", key.SkipVerify)
+		err := dec.SendMail([]string{to}, "demostack Confirmation Email.",
+			"The SMTP settings are configured properly.", dec.SkipVerify)
 		if err != nil {
 			log.Println(err)
 		}
 	}
 
-	enc, err := key.Encrypted(passphrase)
+	enc, err := dec.Encrypted(passphrase)
 	if err != nil {
 		log.Fatalln(err)
 	}

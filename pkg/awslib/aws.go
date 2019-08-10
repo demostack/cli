@@ -1,6 +1,8 @@
 package awslib
 
 import (
+	"time"
+
 	"github.com/demostack/cli/pkg/secure"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -11,11 +13,12 @@ import (
 
 // Storage is S3 bucket storage.
 type Storage struct {
-	AccessKeyID     string `json:"id"`
-	SecretAccessKey string `json:"secret"`
-	SessionToken    string `json:"session"`
-	Region          string `json:"region"`
-	Bucket          string `json:"bucket"`
+	AccessKeyID     string    `json:"id"`
+	SecretAccessKey string    `json:"secret"`
+	SessionToken    string    `json:"session"`
+	Region          string    `json:"region"`
+	Bucket          string    `json:"bucket"`
+	Expiration      time.Time `json:"expiration"`
 }
 
 // Encrypted returns the storage object encrypted.

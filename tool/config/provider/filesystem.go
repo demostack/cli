@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
+	"os"
 	"os/user"
 	"path/filepath"
 	"reflect"
@@ -59,15 +60,17 @@ func (p FilesystemProvider) Load(v interface{}, params ...string) error {
 
 	b, err := ioutil.ReadFile(filename)
 	if err != nil {
+		return ErrFileNotFound
 		//fmt.Printf("Environment file for, %v, does not exist or cannot be read so a new one will be created.\n", f.App)
-	} else {
-		err = json.Unmarshal(b, v)
-		if err != nil {
-			return errors.New("unmarshal error: " + err.Error())
-		}
-
-		//fmt.Printf("Found %v secure environment variable(s).\n", len(f.Arr))
 	}
+
+	err = json.Unmarshal(b, v)
+	if err != nil {
+		fmt.Println("unmarshal error: ", err)
+		return ErrFileUnmarshalError
+	}
+
+	//fmt.Printf("Found %v secure environment variable(s).\n", len(f.Arr))
 
 	return nil
 }
@@ -89,4 +92,10 @@ func (p FilesystemProvider) Save(v interface{}, params ...string) error {
 	}
 
 	return err
+}
+
+// Delete .
+func (p FilesystemProvider) Delete(params ...string) error {
+	filename := p.Filename(params...)
+	return os.Remove(filename)
 }

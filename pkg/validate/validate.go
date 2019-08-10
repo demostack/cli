@@ -41,12 +41,26 @@ func RequireString(input string) error {
 	return nil
 }
 
-// RequireInt ensures the input is a number..
+// RequireInt ensures the input is a number.
 func RequireInt(input string) error {
 	_, err := strconv.Atoi(input)
 	if err != nil {
 		return errors.New("Int required")
 	}
+	return nil
+}
+
+// RequireAWSSessionInt ensures the input is a number.
+func RequireAWSSessionInt(input string) error {
+	n, err := strconv.Atoi(input)
+	if err != nil {
+		return errors.New("Int required")
+	}
+
+	if n < 15 || n > 2160 {
+		return errors.New("Must be between 15 and 2160")
+	}
+
 	return nil
 }
 

@@ -68,3 +68,20 @@ func Download(c Storage, bucket string, key string) ([]byte, error) {
 
 	return buf.Bytes(), nil
 }
+
+// DeleteObject .
+func DeleteObject(c Storage, bucket string, key string) error {
+	sess := Session(c)
+	svc := s3.New(sess)
+
+	// Delete the object.
+	_, err := svc.DeleteObject(&s3.DeleteObjectInput{
+		Bucket: aws.String(bucket),
+		Key:    aws.String(key),
+	})
+	if err != nil {
+		return err
+	}
+
+	return nil
+}

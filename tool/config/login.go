@@ -7,6 +7,8 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"strconv"
+	"time"
 
 	"github.com/demostack/cli/pkg/awslib"
 	"github.com/demostack/cli/pkg/validate"
@@ -18,9 +20,16 @@ import (
 func (c Config) Login(f File, passphrase *validate.Passphrase) {
 	fmt.Println("Login to authentication service")
 
+	URLDefault := ""
+	UsernameDefault := ""
+	if len(f.Login.Host) > 0 {
+		URLDefault = f.Login.Host
+		UsernameDefault = f.Login.Username
+	}
+
 	prompt := promptui.Prompt{
 		Label:     "URL (string)",
-		Default:   "http://",
+		Default:   URLDefault,
 		AllowEdit: true,
 		Validate:  validate.RequireString,
 	}
@@ -28,7 +37,7 @@ func (c Config) Login(f File, passphrase *validate.Passphrase) {
 
 	prompt = promptui.Prompt{
 		Label:    "Username (string)",
-		Default:  "",
+		Default:  UsernameDefault,
 		Validate: validate.RequireString,
 	}
 	username := validate.Must(prompt.Run())
@@ -41,25 +50,38 @@ func (c Config) Login(f File, passphrase *validate.Passphrase) {
 	}
 	password := validate.Must(prompt.Run())
 
+	prompt = promptui.Prompt{
+		Label:    "Duration in minutes (int, 15-2160)",
+		Default:  "15",
+		Validate: validate.RequireAWSSessionInt,
+	}
+	duration := validate.Must(prompt.Run())
+
+	dur, _ := strconv.Atoi(duration)
+
 	type Request struct {
-		Username string `json:"username"`
-		Password string `json:"password"`
+		Username        string `json:"username"`
+		Password        string `json:"password"`
+		DurationSeconds int64  `json:"duration_seconds"`
 	}
 	r := Request{
-		Username: username,
-		Password: password,
+		Username:        username,
+		Password:        password,
+		DurationSeconds: int64(dur * 60),
 	}
 	b, err := json.Marshal(r)
 	if err != nil {
 		log.Fatalln(err)
 	}
 
-	req, err := http.NewRequest("POST", URL, bytes.NewReader(b))
+	req, err := http.NewRequest("POST", URL+"/auth", bytes.NewReader(b))
 	if err != nil {
 		log.Fatalln(err)
 	}
 
 	req.Header.Add("Content-Type", "application/json")
+
+	fmt.Println("Sending MFA request...")
 
 	client := http.Client{}
 	resp, err := client.Do(req)
@@ -87,10 +109,12 @@ func (c Config) Login(f File, passphrase *validate.Passphrase) {
 
 	fmt.Println("Login successful.")
 
+	expiration := time.Now()
 	key := awslib.Storage{
 		AccessKeyID:     result.AccessKeyID,
 		SecretAccessKey: result.SecretAccessKey,
 		SessionToken:    result.SessionToken,
+		Expiration:      expiration.Add(time.Second * time.Duration(r.DurationSeconds)),
 	}
 
 	prompt = promptui.Prompt{
@@ -122,6 +146,10 @@ func (c Config) Login(f File, passphrase *validate.Passphrase) {
 
 	f.Storage.Current = "aws"
 	f.Storage.AWS = key
+	f.Login = Login{
+		Host:     URL,
+		Username: username,
+	}
 
 	err = c.store.Save(f, c.Prefix)
 	if err != nil {
