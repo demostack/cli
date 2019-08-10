@@ -82,3 +82,19 @@ func AccountNumber(c Storage) (string, error) {
 
 	return aws.StringValue(out.Account), nil
 }
+
+// Valid return true if the credentials are valid.
+func (c Storage) Valid() bool {
+	if len(c.AccessKeyID) == 0 {
+		return false
+	}
+
+	now := time.Now()
+	difference := c.Expiration.Sub(now)
+
+	if difference < 0 {
+		return false
+	}
+
+	return true
+}

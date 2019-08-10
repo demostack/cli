@@ -35,6 +35,11 @@ var (
 	cLoginTest = app.Command("login-test", "Test the AWS credentials from authentication service.")
 	cLogout    = app.Command("logout", "Logout and delete local files.")
 
+	cPull    = app.Command("pull", "Copy files from provider to filesystem.")
+	cPullAWS = cPull.Command("aws", "Copy files from AWS to filesystem.")
+	cPush    = app.Command("push", "Copy files filesystem to provider.")
+	cPushAWS = cPush.Command("aws", "Copy files from filesystem to AWS.")
+
 	cEncrypt = app.Command("encrypt", "Encrypt a variable with a password.")
 	cDecrypt = app.Command("decrypt", "Decrypt a variable with a password.")
 
@@ -97,13 +102,16 @@ func main() {
 		passphrase = validate.NewPassphrase(c.ID)
 	}
 
+	// Load the other storage providers
+	awss := provider.NewAWSProvider(l, c.Storage.AWS, passphrase)
+
 	// Load the current storage provider for the tools.
 	var sp tool.IStorage
 	switch c.Storage.Current {
 	case "filesystem":
 		sp = fs
 	case "aws":
-		sp = provider.NewAWSProvider(l, c.Storage.AWS, passphrase)
+		sp = awss
 	}
 
 	// Load the tools.
@@ -118,6 +126,11 @@ func main() {
 		appConfig.LoginTest(c, passphrase)
 	case cLogout.FullCommand():
 		appConfig.Logout(c, passphrase)
+
+	case cPushAWS.FullCommand():
+		appConfig.Push(c, "filesystem", "aws", fs, awss, passphrase)
+	case cPullAWS.FullCommand():
+		appConfig.Push(c, "aws", "filesystem", awss, fs, passphrase)
 
 	case cRun.FullCommand():
 		if len(*cRunArgs) < 2 {
