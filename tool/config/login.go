@@ -138,6 +138,12 @@ func (c Config) Login(f File, passphrase *validate.Passphrase) {
 	}
 	key.Bucket = validate.Must(prompt.Run())
 
+	// Create the S3 bucket. Will not fail if bucket already exists.
+	err = awslib.CreateBucket(key)
+	if err != nil {
+		log.Fatalln(err)
+	}
+
 	// Encrypt the sensitive information.
 	key, err = key.Encrypted(passphrase.Password())
 	if err != nil {

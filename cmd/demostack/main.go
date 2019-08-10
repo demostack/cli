@@ -229,7 +229,7 @@ func main() {
 		appConfig.SendSMS(c, passphrase)
 
 	case cConfigStorageAWS.FullCommand():
-		appConfig.SetStorageAWS(c, passphrase.Password())
+		appConfig.SetStorageAWS(c)
 	case cConfigStorageFilesystem.FullCommand():
 		appConfig.SetStorageFilesystem(c)
 	}
