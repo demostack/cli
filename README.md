@@ -14,13 +14,61 @@ Features:
 
 Keep in mind that that environment variables are still visible for all running applications on a Mac using `ps eww <PID>` or on Linux using `ps faux | grep 'PROCESSHERE'` and then `cat /proc/PIDHERE/environ`.
 
+## Typically Workflows
+
+### Working with Storage in AWS
+
+```bash
+# Login to AWS.
+demostack login
+
+# Add new SSH key.
+demostack ssh new
+
+# Logout to delete the local files.
+demostack logout
+```
+
+### Moving Files from Filesystem to AWS
+
+```bash
+# Add new SSH key to local filesystem.
+demostack ssh new
+
+# Login to AWS.
+demostack login
+
+# Copy the local files to AWS.
+demostack push aws
+
+# Logout to delete the local files.
+demostack logout
+```
+
+## Moving Files from AWS to Filesystem
+
+```bash
+# Login to AWS.
+demostack login
+
+# Copy files from AWS to local filesystem.
+demostack pull aws
+
+# Set the current storage mode to read and write to files on the local filesystem.
+demostack config storage filesystem
+
+# View SSH key on local filesystem.
+demostack ssh view
+```
+
+## List of Commands
+
 Here is the syntax for the application:
 
 ```
 usage: demostack [<flags>] <command> [<args> ...]
 
-A command-line application utility for managing encrypted environment
-variables and SSH connection information. Also contains SMTP functionality.
+A command-line application utility for managing encrypted environment variables and SSH connection information. Also contains SMTP functionality.
 
 Flags:
   -h, --help     Show context-sensitive help (also try --help-long and --help-man).
@@ -32,6 +80,21 @@ Commands:
 
   run <arguments>...
     Run a command with secure environment variables.
+
+  login
+    Login to the authentication service.
+
+  login-test
+    Test the AWS credentials from authentication service.
+
+  logout
+    Logout and delete local files.
+
+  pull aws
+    Copy files from AWS to filesystem.
+
+  push aws
+    Copy files from filesystem to AWS.
 
   encrypt
     Encrypt a variable with a password.
@@ -69,15 +132,18 @@ Commands:
   config change-password
     Change the config password.
 
-  config smtp
-    Set settings for the SMTP server for the application.
-
   config storage filesystem
     Set the storage to the local filesystem.
 
   config storage aws
     Set the storage to AWS.
 
-  email
-    Send an email via SMTP.
+  email set
+    Set settings for the SMTP server for the application.
+
+  email send
+    Set settings for the SMTP server for the application.
+
+  sms
+    Send an SMS text message via AWS SNS.
 ```

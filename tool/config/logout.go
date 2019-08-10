@@ -10,7 +10,7 @@ import (
 )
 
 // Logout .
-func (c Config) Logout(f File, passphrase *validate.Passphrase) {
+func (c Config) Logout(f File, prefixList []string, passphrase *validate.Passphrase) {
 	fmt.Println("Logout and remove local files.")
 
 	pSelect := promptui.Select{
@@ -26,5 +26,10 @@ func (c Config) Logout(f File, passphrase *validate.Passphrase) {
 	}
 
 	c.store.Delete(c.Prefix)
+
+	for _, v := range prefixList {
+		c.store.Delete(v)
+	}
+
 	fmt.Println("Logout successful.")
 }

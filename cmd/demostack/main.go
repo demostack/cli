@@ -70,6 +70,14 @@ var (
 	cConfigStorageAWS        = cConfigStorage.Command("aws", "Set the storage to AWS.")
 )
 
+var (
+	prefixList = []string{
+		"env",
+		"ssh",
+		"email",
+	}
+)
+
 func init() {
 	// Verbose logging with file name and line number
 	log.SetFlags(log.Lshortfile)
@@ -125,12 +133,12 @@ func main() {
 	case cLoginTest.FullCommand():
 		appConfig.LoginTest(c, passphrase)
 	case cLogout.FullCommand():
-		appConfig.Logout(c, passphrase)
+		appConfig.Logout(c, prefixList, passphrase)
 
 	case cPushAWS.FullCommand():
-		appConfig.Push(c, "filesystem", "aws", fs, awss, passphrase)
+		appConfig.Push(c, prefixList, "filesystem", "aws", fs, awss, passphrase)
 	case cPullAWS.FullCommand():
-		appConfig.Push(c, "aws", "filesystem", awss, fs, passphrase)
+		appConfig.Push(c, prefixList, "aws", "filesystem", awss, fs, passphrase)
 
 	case cRun.FullCommand():
 		if len(*cRunArgs) < 2 {
